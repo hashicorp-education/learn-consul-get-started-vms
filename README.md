@@ -63,7 +63,7 @@ The output can be used as an example and you can tune it to adapt for your syste
 | DATACENTER        | `dc1` | [datacenter name]() |
 | DOMAIN            | `consul` | [datacenter domain](https://www.consul.io/docs/agent/config/cli-flags#_domain) |
 | CONSUL_DATA_DIR   | `/etc/consul/data` | [location for Consul data persistence](https://www.consul.io/docs/agent/config/cli-flags#_data_dir) |
-| CONSUL_CONFIG_DIR | `/etc/consul/config` | [location for Consul configuration](https://www.consul.io/docs/agent/config/cli-flags#_config_dir). **Files will be stored in this folder.** |
+| CONSUL_CONFIG_DIR | `/etc/consul/config` | [location for Consul configuration](https://www.consul.io/docs/agent/config/cli-flags#_config_dir). |
 | DNS_RECURSOR      | `1.1.1.1` | [recursors for DNS configuration](https://www.consul.io/docs/agent/config/config-files#recursors) |
 | HTTPS_PORT        | `8443` | [port for HTTPS service](https://www.consul.io/docs/agent/config/config-files#https_port) |
 | DNS_PORT          | `8600` | [port for DNS service](https://www.consul.io/docs/agent/config/config-files#dns_port) |

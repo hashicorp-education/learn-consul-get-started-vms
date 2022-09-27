@@ -85,7 +85,7 @@ service {
       proxy {
         upstreams = [
           {
-            destination_name = "db"
+            destination_name = "hashicups-db"
             local_bind_port = 5432
           }
         ]
@@ -114,7 +114,7 @@ service {
       id =  "check-product-api",
       name = "Product API status check",
       service_id = "${SERVICE}-1",
-      tcp  = "${SERVICE}${FQDN_SUFFIX}:9090",
+      tcp  = "localhost:9090",
       interval = "1s",
       timeout = "1s"
     }
@@ -142,7 +142,7 @@ service {
     sidecar_service {
       proxy {
         upstreams {
-            destination_name = "api"
+            destination_name = "hashicups-api"
             local_bind_address = "127.0.0.1"
             local_bind_port = 8081
         }
@@ -183,11 +183,11 @@ service {
       proxy {
         upstreams = [
           {
-            destination_name = "frontend"
+            destination_name = "hashicups-frontend"
             local_bind_port = 3000
           },
           {
-            destination_name = "api"
+            destination_name = "hashicups-api"
             local_bind_port = 8081
           }
         ]
@@ -215,10 +215,10 @@ echo "Create intention configuration files"
 
 tee ${CONFIGS}/global/intention-db.hcl > /dev/null << EOF
 Kind = "service-intentions"
-Name = "db"
+Name = "hashicups-db"
 Sources = [
   {
-    Name   = "api"
+    Name   = "hashicups-api"
     Action = "allow"
   }
 ]
@@ -227,11 +227,11 @@ EOF
 tee ${CONFIGS}/global/intention-db.json > /dev/null << EOF
 {
   "Kind": "service-intentions",
-  "Name": "db",
+  "Name": "hashicups-db",
   "Sources": [
     {
       "Action": "allow",
-      "Name": "api"
+      "Name": "hashicups-api"
     }
   ]
 }
@@ -240,14 +240,14 @@ EOF
 
 tee ${CONFIGS}/global/intention-api.hcl > /dev/null << EOF
 Kind = "service-intentions"
-Name = "api"
+Name = "hashicups-api"
 Sources = [
   {
-    Name   = "frontend"
+    Name   = "hashicups-frontend"
     Action = "allow"
   },
   {
-    Name   = "nginx"
+    Name   = "hashicups-nginx"
     Action = "allow"
   }
 ]
@@ -256,15 +256,15 @@ EOF
 tee ${CONFIGS}/global/intention-api.json > /dev/null << EOF
 {
   "Kind": "service-intentions",
-  "Name": "api",
+  "Name": "hashicups-api",
   "Sources": [
     {
       "Action": "allow",
-      "Name": "frontend"
+      "Name": "hashicups-frontend"
     },
     {
       "Action": "allow",
-      "Name": "nginx"
+      "Name": "hashicups-nginx"
     }
   ]
 }
@@ -273,10 +273,10 @@ EOF
 
 tee ${CONFIGS}/global/intention-frontend.hcl > /dev/null << EOF
 Kind = "service-intentions"
-Name = "frontend"
+Name = "hashicups-frontend"
 Sources = [
   {
-    Name   = "nginx"
+    Name   = "hashicups-nginx"
     Action = "allow"
   }
 ]
@@ -285,11 +285,11 @@ EOF
 tee ${CONFIGS}/global/intention-frontend.json > /dev/null << EOF
 {
   "Kind": "service-intentions",
-  "Name": "frontend",
+  "Name": "hashicups-frontend",
   "Sources": [
     {
       "Action": "allow",
-      "Name": "nginx"
+      "Name": "hashicups-nginx"
     }
   ]
 }

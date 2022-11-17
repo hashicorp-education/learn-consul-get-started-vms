@@ -150,7 +150,10 @@ metrics:
       static_configs:
         - targets: ['127.0.0.1:8500']
 
-logs:/home/app/grafana-agent -config.file /home/app/grafana-agent.yaml
+logs:
+  configs:
+  - name: default
+    clients:
       - url: http://loki:3100/loki/api/v1/push
     positions:
       filename: /tmp/positions.yaml

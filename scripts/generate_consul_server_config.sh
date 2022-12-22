@@ -23,8 +23,6 @@ if [ ${STAT} -ne 0 ];  then
   exit 1;
 fi
 
-cd ${CONSUL_CONFIG_DIR}
-
 echo "Generate agent configuration - agent-server-secure.hcl"
 tee ${CONSUL_CONFIG_DIR}/agent-server-secure.hcl > /dev/null << EOF
 # agent-server-secure.hcl
@@ -82,11 +80,14 @@ EOF
 echo "Generate gossip encryption key configuration - agent-gossip-encryption.hcl"
 echo encrypt = \"$(consul keygen)\" > ${CONSUL_CONFIG_DIR}/agent-gossip-encryption.hcl
 
-echo "Create CA for Consul datacenter"
-consul tls ca create -domain=${DOMAIN}
+(
+  cd ${CONSUL_CONFIG_DIR}
+  echo "Create CA for Consul datacenter"
+  consul tls ca create -domain=${DOMAIN}
 
-echo "Create server Certificate and key pair"
-consul tls cert create -server -domain ${DOMAIN} -dc=${DATACENTER}
+  echo "Create server Certificate and key pair"
+  consul tls cert create -server -domain ${DOMAIN} -dc=${DATACENTER}
+)
 
 echo "Generate TLS configuration - agent-server-tls.hcl"
 tee ${CONSUL_CONFIG_DIR}/agent-server-tls.hcl > /dev/null << EOF
@@ -109,7 +110,7 @@ tee ${CONSUL_CONFIG_DIR}/agent-server-tls.hcl > /dev/null << EOF
 # }
 
 ## TLS Encryption (requires cert files to be present on the server nodes)
-ca_file   = "/etc/consul/config/consul-agent-ca.pem"
+ca_file   = "${CONSUL_CONFIG_DIR}/consul-agent-ca.pem"
 cert_file = "${CONSUL_CONFIG_DIR}/${DATACENTER}-server-${DOMAIN}-0.pem"
 key_file  = "${CONSUL_CONFIG_DIR}/${DATACENTER}-server-${DOMAIN}-0-key.pem"
 verify_incoming        = false

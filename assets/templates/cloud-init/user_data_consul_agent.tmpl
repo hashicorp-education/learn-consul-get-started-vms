@@ -1,0 +1,87 @@
+#cloud-config
+# Do not update or manage /etc/hosts at all. This is the default behavior.
+#
+# Whatever is present at instance boot time will be present after boot.
+# User changes will not be overwritten.
+manage_etc_hosts: false
+
+preserve_hostname: true
+package_update: true
+package_upgrade: true
+packages:
+  - apt-transport-https
+  - ca-certificates
+  - curl
+  - gnupg-agent
+  - software-properties-common
+  - jq
+  - dnsutils
+  - tree
+write_files:
+  - path: /etc/hosts
+    content: | 
+      # The following lines are desirable for IPv4 capable hosts
+      127.0.0.1 ${hostname}.local ${hostname}
+      127.0.0.1 localhost.localdomain localhost
+      127.0.0.1 localhost4.localdomain4 localhost4
+      # The following lines are desirable for IPv6 capable hosts
+      ::1 ${hostname}.local ${hostname}
+      ::1 localhost.localdomain localhost
+      ::1 localhost6.localdomain6 localhost6
+
+      ::1 ip6-localhost ip6-loopback
+      fe00::0 ip6-localnet
+      ff00::0 ip6-mcastprefix
+      ff02::1 ip6-allnodes
+      ff02::2 ip6-allrouters
+      ff02::3 ip6-allhosts
+    append: false
+runcmd:
+# set hostname
+ - hostnamectl set-hostname --static ${hostname}
+# Provision certificates
+ - cd /home/admin
+ - mkdir -p certs
+ - echo "${ssh_public_key}" | base64 -d | zcat > certs/id_rsa.pub
+ - echo "${ssh_private_key}" | base64 -d | zcat > certs/id_rsa
+# Make scripts executable
+ - chown admin:admin *.sh
+ - chmod +x *.sh
+# Install Docker
+ - curl -fsSL https://get.docker.com | sh
+ - usermod -aG docker admin
+ - chmod 666 /var/run/docker.sock
+# Install Consul
+ - wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor | sudo tee /usr/share/keyrings/hashicorp-archive-keyring.gpg
+ - echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+ - sudo apt update 
+ - APT_VERS=`sudo apt-cache show consul | grep Version | awk '{print $2}' | grep "^${consul_version}" | sort -r -V | head -1`; if [ "$${APT_VERS}"  = "" -o "${consul_version}" = "latest" ]; then export VERS=""; else export VERS="=$${APT_VERS}"; fi
+ - sudo apt-get install --assume-yes consul$${VERS}
+ - usermod -aG consul admin
+ - chmod g+w /etc/consul.d
+ - sudo cp /usr/lib/systemd/system/consul.service /etc/systemd/system/consul.service
+# Install Envoy (requires Consul binary and Docker)
+ - cd /home/admin
+ - ./install_envoy.sh
+# Install Grafana agent
+ - wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | sudo tee /usr/share/keyrings/grafana.gpg
+ - echo "deb [signed-by=/usr/share/keyrings/grafana.gpg] https://apt.grafana.com stable main" | sudo tee /etc/apt/sources.list.d/grafana.list
+ - sudo apt update && sudo apt-get install grafana-agent
+# # Make scripts executable
+#  - cd /home/admin
+#  - chmod +x *.sh
+# # Configure Consul
+#  - ./consul_config.sh 
+# # Configure Consul services
+#  - ./service_config.sh
+# # Start Application
+#  - ./start_app.sh
+# # Start Consul agents
+#  - ./start_consul.sh
+# # Start Consul agents
+#  - sudo chmod +x ./start_sidecar.sh
+#  - ./start_sidecar.sh
+# # # Grafana Agent Config
+# #  - ./grafana_agent_config.sh
+# # # Grafana Agent Config
+# #  - ./start_grafana_agent.sh

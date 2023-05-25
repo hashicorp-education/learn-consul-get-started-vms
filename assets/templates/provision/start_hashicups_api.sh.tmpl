@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+
+## Remove pre-existing instances
+docker rm -f hashicups-api-payments hashicups-api-product hashicups-api-public
+sudo rm -rf /home/admin/conf.json
+
+if [ "$${1}" == local ]; then
+  # Start Application on localhost
+  NETWORK_PAY="--publish 127.0.0.1:8080:8080"
+  NETWORK_PRO="--network host"
+  NETWORK_PUB="--network host"
+  BIND_PRO="127.0.0.1"
+  BIND_PUB="127.0.0.1"
+  DB="127.0.0.1"
+  PROD="127.0.0.1"
+  PAY="127.0.0.1"
+else
+  NETWORK_PAY="--network host"
+  NETWORK_PRO="--network host"
+  NETWORK_PUB="--network host"
+  DB="${DB_HOST}"
+  PROD="${PRODUCT_API_HOST}"
+  PAY="${PAYMENT_API_HOST}"
+fi
+
+## Payments
+docker run \
+  -d \
+  $${NETWORK_PAY} \
+  --restart unless-stopped \
+  --name hashicups-api-payments hashicorpdemoapp/payments:${VERSION_PAY}
+
+## Product API
+tee /home/admin/conf.json > /dev/null << EOF
+{
+  "db_connection": "host=$${DB} port=5432 user=hashicups password=hashicups_pwd dbname=products sslmode=disable",
+  "bind_address": "$${BIND_PRO}:9090",
+  "metrics_address": "$${BIND_PRO}:9103"
+}
+EOF
+
+docker run \
+  -d \
+  $${NETWORK_PRO} \
+  --restart unless-stopped \
+  --volume /home/admin/conf.json:/conf.json \
+  --name hashicups-api-product hashicorpdemoapp/product-api:${VERSION_PROD}
+
+## Public API
+docker run \
+  -d \
+  $${NETWORK_PUB} \
+  --restart unless-stopped \
+  --env PRODUCT_API_URI=http://$${PROD}:9090 \
+  --env PAYMENT_API_URI=http://$${PAY}:8080 \
+  --env  BIND_ADDRESS="$${BIND_PUB}:8081" \
+  --name hashicups-api-public hashicorpdemoapp/public-api:${VERSION_PUB}
+

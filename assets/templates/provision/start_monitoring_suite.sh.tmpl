@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+
+LOKI_IMAGE="grafana/loki:main"
+LOKI_PARAMS="" 
+LOKI_COMMAND="-config.file=/etc/loki/local-config.yaml -server.grpc-listen-port 9007"
+
+GRAFANA_IMAGE="grafana/grafana:latest"
+GRAFANA_PARAMS="--volume=/home/admin/assets/templates/conf/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources \
+                --volume=/home/admin/assets/templates/conf/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards \
+                --volume=/home/admin/assets/templates/conf/grafana/dashboards:/var/lib/grafana/dashboards \
+                -e GF_AUTH_ANONYMOUS_ENABLED=true \
+                -e GF_AUTH_ANONYMOUS_ORG_ROLE=Admin \
+                -e GF_AUTH_DISABLE_LOGIN_FORM=true"
+GRAFANA_COMMAND=""
+
+MIMIR_IMAGE="grafana/mimir:latest"
+MIMIR_PARAMS="--volume=/home/admin/assets/templates/conf/mimir/mimir.yaml:/etc/mimir/mimir.yaml"
+MIMIR_COMMAND="--config.file=/etc/mimir/mimir.yaml"
+
+## Remove pre-existing instances
+docker rm -f loki mimir grafana
+
+## Start Loki http:3100 grpc:9007
+docker run \
+  -d \
+  --network host \
+  --restart unless-stopped \
+  --name="loki" \
+  --hostname="loki" \
+  $${LOKI_PARAMS}\
+  $${LOKI_IMAGE} $${LOKI_COMMAND} > /dev/null 2>&1
+
+
+## Start Grafana :3000
+docker run \
+  -d \
+  --network host \
+  --restart unless-stopped \
+  --name="grafana" \
+  --hostname="grafana" \
+  $${GRAFANA_PARAMS}\
+  $${GRAFANA_IMAGE} $${GRAFANA_COMMAND} > /dev/null 2>&1
+
+## Start Mimir http:9009 grpc:9008
+docker run \
+  -d \
+  --network host \
+  --restart unless-stopped \
+  --name="mimir" \
+  --hostname="mimir" \
+  $${MIMIR_PARAMS}\
+  $${MIMIR_IMAGE} $${MIMIR_COMMAND} > /dev/null 2>&1

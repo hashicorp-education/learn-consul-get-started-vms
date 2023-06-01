@@ -13,6 +13,7 @@ ${aws_instance.api.private_ip} hashicups-api api
 ${aws_instance.database.private_ip} hashicups-db database db
 ${aws_instance.consul_server.0.private_ip} consul-server-0 consul server.${var.consul_datacenter}.${var.consul_domain}
 ${aws_instance.gateway-api.private_ip} gateway-api gw-api
+${aws_instance.gateway-api.public_ip} gateway-api-public gw-api-public
   EOF
 }
 

@@ -48,6 +48,9 @@ OUTPUT_FOLDER=${OUTPUT_FOLDER:-"${STEP_ASSETS}"}
 
 CONSUL_GOSSIP_KEY=${CONSUL_GOSSIP_KEY:-""}
 
+GRAFANA_URI=${GRAFANA_URI:-`getent hosts grafana | awk '{print $1}'`}
+PROMETHEUS_URI=${PROMETHEUS_URI:-`getent hosts mimir | awk '{print $1}'`}
+
 ## Check mandatory variables 
 [ -z "$CONSUL_RETRY_JOIN" ] && _log_err "Mandatory parameter: CONSUL_RETRY_JOIN not set."  && exit 1
 [ -z "$OUTPUT_FOLDER" ]     && _log_err "Mandatory parameter: OUTPUT_FOLDER not set."      && exit 1

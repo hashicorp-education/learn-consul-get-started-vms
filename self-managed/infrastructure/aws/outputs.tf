@@ -16,7 +16,7 @@ output "ui_consul" {
 }
 
 output "ui_grafana" {
-  value = "http://${aws_instance.bastion.public_ip}:3000"
+  value = "http://${aws_instance.bastion.public_ip}:3000/d/hashicups/hashicups"
 }
 
 output "remote_ops" {

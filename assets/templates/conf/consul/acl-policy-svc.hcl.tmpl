@@ -1,0 +1,24 @@
+# Allow the service and its sidecar proxy to register into the catalog.
+service "${SERVICE}" {
+    policy = "write"
+}
+
+service "${SERVICE}-sidecar-proxy" {
+    policy = "write"
+}
+
+node_prefix "" {
+    policy = "read"
+}
+
+# Allow the agent to register its own node in the Catalog and update its network coordinates
+node "${SERVICE}" {
+  policy = "write"
+}
+
+# Allows the agent to detect and diff services registered to itself. This is used during
+# anti-entropy to reconcile difference between the agents knowledge of registered
+# services and checks in comparison with what is known in the Catalog.
+service_prefix "" {
+  policy = "read"
+}

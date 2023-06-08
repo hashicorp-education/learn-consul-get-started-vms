@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+##Retrieve latest compatible Envoy version
+export ENVOY_VERS=`curl -s https://developer.hashicorp.com/consul/docs/connect/proxies/envoy | \
+    grep -Po "Compatible Envoy Versions.*" | \
+    grep -Po "<tr><td>\d\.\d\d\.x</td><td>[0-9\.\,\s]*</td></tr>" | \
+    sed 's/<\/td><td>/ : /' | sed 's/<[tdr\/]*>//g' | \
+    grep \`consul version | grep Consul | grep -oP "(\d\.\d\d)"\` | \
+    sed 's/.*\ :\ //g' | sed 's/,.*//'`
+
+cd /home/admin
+
+## Run container with desired Envoy version
+docker run -d --name envoy envoyproxy/envoy:v$${ENVOY_VERS}
+
+## Copy binary locally (works only on GNU/Linux)
+sudo docker cp envoy:/usr/local/bin/envoy /usr/bin/envoy
+sudo chown consul:consul /usr/bin/envoy
+
+## Cleans Docker cache
+docker rm -f envoy
+docker image rm -f envoyproxy/envoy:v$${ENVOY_VERS}

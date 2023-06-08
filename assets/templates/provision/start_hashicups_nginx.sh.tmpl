@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+
+export http_upgrade='$http_upgrade'
+export host='$host'
+export http_upgrade='$http_upgrade'
+
+# SERVICE_MESH=${CONFIGURE_SERVICE_MESH}
+
+if [ "$${1}" == local ]; then
+  FRONTEND="127.0.0.1"
+  API="127.0.0.1"
+elif [ "$${1}" == mesh ]; then
+  FRONTEND="127.0.0.1"
+  API="127.0.0.1"
+else
+  FRONTEND=${FE_HOST}
+  API=${PUBLIC_API_HOST}
+fi
+
+
+tee /home/admin/nginx.conf > /dev/null << EOF
+proxy_cache_path /var/cache/nginx levels=1:2 keys_zone=STATIC:10m inactive=7d use_temp_path=off;
+
+upstream frontend_upstream {
+  server $${FRONTEND}:3000;
+}
+
+server {
+  listen 80;
+  server_name  localhost;
+  server_tokens off;
+  gzip on;
+  gzip_proxied any;
+  gzip_comp_level 4;
+  gzip_types text/css application/javascript image/svg+xml;
+  proxy_http_version 1.1;
+  proxy_set_header Upgrade $http_upgrade;
+  proxy_set_header Connection 'upgrade';
+  proxy_set_header Host $host;
+  proxy_cache_bypass $http_upgrade;
+
+  location / {
+    proxy_pass http://frontend_upstream;
+  }
+
+  location /api {
+    proxy_pass http://$${API}:8081;
+  }
+}
+EOF
+
+# Removes previous instances
+docker rm -f hashicups-nginx
+
+## ATM we do not start NGINX on localhost ever until API GW tutorial is ready
+# if [ "$${SERVICE_MESH}" == true ]; then
+#     # Start Application on localhost
+#     NETWORK="--publish 127.0.0.1:80:80"
+# el
+
+if [ "$${1}" == local ]; then
+    # Start Application on localhost
+    NETWORK="--publish 127.0.0.1:80:80"
+else
+    NETWORK="--network host"
+fi
+
+
+# Starts application
+docker run \
+  -d \
+  $${NETWORK} \
+  --restart unless-stopped \
+  --volume /home/admin/nginx.conf:/etc/nginx/conf.d/default.conf \
+  --name hashicups-nginx nginx:alpine

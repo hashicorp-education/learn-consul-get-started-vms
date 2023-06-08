@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+docker rm -f hashicups-db
+
+if [ "$${1}" == local ]; then
+    # Start Application on localhost
+    NETWORK="--publish 127.0.0.1:5432:5432"
+else
+    NETWORK="--network host"
+fi
+
+docker run \
+  -d \
+  $${NETWORK} \
+  --restart unless-stopped \
+  --env POSTGRES_DB=products \
+  --env POSTGRES_PASSWORD=hashicups_pwd \
+  --env POSTGRES_USER=hashicups \
+  --name hashicups-db hashicorpdemoapp/product-api-db:${VERSION}

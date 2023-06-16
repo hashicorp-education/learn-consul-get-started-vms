@@ -9,8 +9,8 @@
 # ++-----------------+
 
 # Create necessary directories to operate
-mkdir -p ${ASSETS}
-mkdir -p ${LOGS}
+mkdir -p "${ASSETS}"
+mkdir -p "${LOGS}"
 
 # PATH=$PATH:/home/app/bin
 # SSH_OPTS="StrictHostKeyChecking=accept-new"
@@ -50,10 +50,7 @@ ${GRAFANA_URI} grafana
 EOT
 
   log "Starting monitoring suite on Bastion Host"
-  bash ${ASSETS}scenario/start_monitoring_suite.sh
+  bash "${ASSETS}scenario/start_monitoring_suite.sh"
 
-  
-
-  
 fi
 

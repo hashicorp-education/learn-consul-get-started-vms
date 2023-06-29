@@ -33,16 +33,16 @@ header1 "Starting Consul server"
 ##########################################################
 header2 "Generate Consul servers configuration"
 
-## MARK: [script] generate_consul_server_config.sh
+## [cmd] [script] generate_consul_server_config.sh
 execute_supporting_script "generate_consul_server_config.sh"
 
 ##########################################################
 header2 "Copy Consul servers configuration files"
 
-## ~todo make all servers discoverable from bastion host
+## todo: make all servers discoverable from bastion host
 for i in `seq 0 "$((SERVER_NUMBER-1))"`; do
   
-  ## -todo this thing is ugly. Debug and check paths
+  ## [mark] this thing is ugly. Debug and check paths
   log "Remove pre-existing configuration and stopping pre-existing Consul instances"
   remote_exec consul-server-$i "sudo rm -rf ${CONSUL_CONFIG_DIR}* && \
                                   sudo mkdir -p ${CONSUL_CONFIG_DIR} && \
@@ -67,7 +67,7 @@ done
 ##########################################################
 header2 "Start Consul"
 
-## ~todo make all servers discoverable from bastion host
+## todo: make all servers discoverable from bastion host
 for i in `seq 0 "$((SERVER_NUMBER-1))"`; do
   log "Start Consul process on consul-server-$i"
   
@@ -116,5 +116,5 @@ export CONSUL_HTTP_TOKEN=`cat ${STEP_ASSETS}secrets/acl-token-bootstrap.json | j
 ##########################################################
 header2 "Configure servers token"
 
-## MARK: [script] generate_consul_server_tokens.sh
+## [cmd] [script] generate_consul_server_tokens.sh
 execute_supporting_script "generate_consul_server_tokens.sh"

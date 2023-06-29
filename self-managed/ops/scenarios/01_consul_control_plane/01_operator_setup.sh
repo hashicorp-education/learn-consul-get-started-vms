@@ -34,7 +34,8 @@ if [ "${START_MONITORING_SUITE}" == "true" ]; then
 
   log "Configuring DNS for monitoring suite"
 
-  ## ~todo: Cloud provider breaking point
+  ## [warn] Cloud provider breaking point
+  ## [feat] Make conditional check on Cloud provider
   ## The following steps only work on AWS. Use the reference link for ideas on
   ## how to make platform independent.  
   ## https://github.com/hashicorp-education/learn-nomad-getting-started/blob/main/shared/data-scripts/user-data-client.sh
@@ -52,8 +53,5 @@ EOT
   log "Starting monitoring suite on Bastion Host"
   bash ${ASSETS}scenario/start_monitoring_suite.sh
 
-  
-
-  
 fi
 

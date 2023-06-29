@@ -27,7 +27,7 @@ for node in ${NODES_ARRAY[@]}; do
   # export CONSUL_RETRY_JOIN
   header3 "Generate Consul client configuration for ${NODE_NAME}"
 
-  ## MARK: [script] generate_consul_client_config.sh
+  ## [cmd] [script] generate_consul_client_config.sh
   log "[EXTERNAL SCRIPT] - Generate Consul config"  
   execute_supporting_script "generate_consul_client_config.sh"
 
@@ -80,7 +80,8 @@ EOF
   DNS_TOK=`cat ${STEP_ASSETS}secrets/acl-token-dns.json | jq -r ".SecretID"`
   AGENT_TOKEN=`cat ${STEP_ASSETS}secrets/acl-token-${NODE_NAME}.json | jq -r ".SecretID"` 
 
-  ## !todo: figure before fly - testing with management token
+  ## [crit] figure before fly - testing with management token
+  ## [debug] Test if still true
   # DNS_TOK=${CONSUL_HTTP_TOKEN}
   # AGENT_TOKEN=${CONSUL_HTTP_TOKEN}
 
@@ -95,13 +96,13 @@ acl {
 EOF
 
   ## Adding the token to the service definition files for anti-entropy
-  ## !todo [CHECK BEHAVIOR]: Why is config_file_service_registration not enforced?
+  ## [warn] [CHECK BEHAVIOR]: Why is config_file_service_registration not enforced?
   ## Is it safe enough to set default = agent ? After all the client is not 
   ## exposing anything sensitive.
   export _agent_token=${AGENT_TOKEN}
 
-  ## MARK: [script] generate_consul_service_config.sh
-  ## -todo move service definition map outside
+  ## [cmd] [script] generate_consul_service_config.sh
+  ## [ ] move service definition map outside
   log "[EXTERNAL SCRIPT] - Generate services config"
   execute_supporting_script "generate_consul_service_config.sh"
 

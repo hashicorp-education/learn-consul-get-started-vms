@@ -89,7 +89,7 @@ EOF
 
 _log "Setting environment variables to communicate with Consul"
 
-## ~todo: Make CONSUL_HTTP_ADDR mandatory from outside 
+## [ ] Make CONSUL_HTTP_ADDR mandatory from outside 
 export CONSUL_HTTP_ADDR="https://consul-server-0${FQDN_SUFFIX}:${CONSUL_HTTPS_PORT}"
 export CONSUL_HTTP_SSL=true
 export CONSUL_CACERT="${OUTPUT_FOLDER}secrets/consul-agent-ca.pem"

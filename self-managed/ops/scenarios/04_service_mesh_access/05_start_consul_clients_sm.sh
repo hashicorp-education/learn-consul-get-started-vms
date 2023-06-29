@@ -41,7 +41,8 @@ for node in ${NODES_ARRAY[@]}; do
   header3 "Start Envoy sidecar for ${NODE_NAME}"
   _agent_token=`cat ${STEP_ASSETS}secrets/acl-token-${NODE_NAME}.json | jq -r ".SecretID"`
   
-  ## !todo Remove before fly. Test with bootstrap token
+  ## [crit] Remove before fly. Test with bootstrap token
+  ## [debug] Test if still true
   # _agent_token=${CONSUL_HTTP_TOKEN}
   
   log "Stop existing instances"

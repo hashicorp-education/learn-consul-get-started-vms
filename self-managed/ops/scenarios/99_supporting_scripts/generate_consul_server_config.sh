@@ -29,6 +29,11 @@ _log_warn() {
 # || Parameters      |
 # ++-----------------+
 
+## [debug] Check variables
+_log_warn "CONSUL_DATACENTER = ${CONSUL_DATACENTER}"
+_log_warn "CONSUL_DOMAIN = ${CONSUL_DOMAIN}"
+_log_warn "CONSUL_SERVER_NUMBER = ${CONSUL_SERVER_NUMBER}"
+
 ## Control plane variables
 CONSUL_DATACENTER=${CONSUL_DATACENTER:-"dc1"}
 CONSUL_DOMAIN=${CONSUL_DOMAIN:-"consul"}

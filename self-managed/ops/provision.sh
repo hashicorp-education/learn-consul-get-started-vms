@@ -78,6 +78,8 @@ source ${SCENARIOS_FOLDER}/00_shared_functions.env
 source ${SCENARIOS_FOLDER}/10_scenario_functions.env
 ## Infrastructure related functions. Depends on 00_*.env. Not imported into provision.sh
 source ${SCENARIOS_FOLDER}/20_infrastructure_functions.env
+## Infrastructure related functions. Depends on 00_*.env. Not imported into provision.sh
+source ${SCENARIOS_FOLDER}/30_utility_functions.env
 
 ## Scenario specific environment. Generated dynamically.
 ## UNCHARTED: Currently the tool supports only single scenario running.
@@ -249,6 +251,11 @@ elif [ "$1" == "check" ]; then
   execute_scenario_step "test"
 
   exit 0
+
+elif [ "$1" == "gs_check" ]; then
+
+  base_scenarios_check
+
 fi
 
 ## Clean environment

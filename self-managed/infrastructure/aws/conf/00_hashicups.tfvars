@@ -8,7 +8,7 @@ consul_datacenter = "dc1"
 consul_domain = "consul"
 
 # Number of Consul servers to deploy for Constol plane
-server_number = 1
+server_number = 3
 
 ## Scenario configuration
 scenario = "00_base"

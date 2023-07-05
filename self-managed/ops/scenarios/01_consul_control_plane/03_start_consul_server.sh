@@ -33,15 +33,21 @@ header1 "Starting Consul server"
 ##########################################################
 header2 "Generate Consul servers configuration"
 
+## This needs to be exported here to work inside the script.
+## [bug] [conf] Configuration generated does not work for different dc.domain
+export CONSUL_DOMAIN=${DOMAIN}
+export CONSUL_DATACENTER=${DATACENTER}
+export CONSUL_SERVER_NUMBER=${SERVER_NUMBER}
+
 ## [cmd] [script] generate_consul_server_config.sh
 execute_supporting_script "generate_consul_server_config.sh"
 
 ##########################################################
 header2 "Copy Consul servers configuration files"
 
-## ~todo make all servers discoverable from bastion host
+## [x] make all servers discoverable from bastion host
 for i in `seq 0 "$((SERVER_NUMBER-1))"`; do
-  
+
   ## [mark] this thing is ugly. Debug and check paths
   log "Remove pre-existing configuration and stopping pre-existing Consul instances"
   remote_exec consul-server-$i "sudo rm -rf ${CONSUL_CONFIG_DIR}* && \

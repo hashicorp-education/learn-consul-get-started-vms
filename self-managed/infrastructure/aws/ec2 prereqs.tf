@@ -11,7 +11,10 @@ ${aws_instance.nginx.private_ip} hashicups-nginx nginx
 ${aws_instance.frontend.private_ip} hashicups-frontend frontend
 ${aws_instance.api.private_ip} hashicups-api api
 ${aws_instance.database.private_ip} hashicups-db database db
-${aws_instance.consul_server.0.private_ip} consul-server-0 consul server.${var.consul_datacenter}.${var.consul_domain}
+${aws_instance.consul_server.0.private_ip} consul server.${var.consul_datacenter}.${var.consul_domain}
+%{ for index, ip in aws_instance.consul_server.*.private_ip ~}
+${ip} consul-server-${index} 
+%{ endfor ~}
 ${aws_instance.gateway-api.private_ip} gateway-api gw-api
 ${aws_instance.gateway-api.public_ip} gateway-api-public gw-api-public
   EOF

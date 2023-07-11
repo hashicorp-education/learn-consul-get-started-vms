@@ -256,7 +256,12 @@ elif [ "$1" == "gs_check" ]; then
 
   base_scenarios_check
 
+elif [ "$1" == "scenario_diff" ]; then
+
+  scenarios_diff $2 $3
+
 fi
+
 
 ## Clean environment
 # log "Cleaning Environment"

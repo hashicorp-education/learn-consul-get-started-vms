@@ -7,9 +7,9 @@
 ## Variables from Scenario Environment Definition File
 ## ----------------------------------------------------- ##
 
-
 ## Supporting script configuration
 ## ----------------------------------------------------- ##
+
 ## Number of servers to spin up (3 or 5 recommended for production environment)
 SERVER_NUMBER=${CONSUL_SERVER_NUMBER:-1}
 ## Define primary datacenter and domain for the sandbox Consul DC
@@ -33,13 +33,19 @@ header1 "Starting Consul server"
 ##########################################################
 header2 "Generate Consul servers configuration"
 
+## This needs to be exported here to work inside the script.
+## [bug] [conf] Configuration generated does not work for different dc.domain
+export CONSUL_DOMAIN=${DOMAIN}
+export CONSUL_DATACENTER=${DATACENTER}
+export CONSUL_SERVER_NUMBER=${SERVER_NUMBER}
+
 ## [cmd] [script] generate_consul_server_config.sh
 execute_supporting_script "generate_consul_server_config.sh"
 
 ##########################################################
 header2 "Copy Consul servers configuration files"
 
-## todo: make all servers discoverable from bastion host
+## [x] todo: make all servers discoverable from bastion host
 for i in `seq 0 "$((SERVER_NUMBER-1))"`; do
   
   ## [mark] this thing is ugly. Debug and check paths
@@ -67,7 +73,7 @@ done
 ##########################################################
 header2 "Start Consul"
 
-## todo: make all servers discoverable from bastion host
+## [x] todo: make all servers discoverable from bastion host
 for i in `seq 0 "$((SERVER_NUMBER-1))"`; do
   log "Start Consul process on consul-server-$i"
   

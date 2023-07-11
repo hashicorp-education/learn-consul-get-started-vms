@@ -45,7 +45,7 @@ execute_supporting_script "generate_consul_server_config.sh"
 ##########################################################
 header2 "Copy Consul servers configuration files"
 
-## [x] make all servers discoverable from bastion host
+## [x] todo make all servers discoverable from bastion host
 for i in `seq 0 "$((SERVER_NUMBER-1))"`; do
 
   ## [mark] this thing is ugly. Debug and check paths
@@ -73,7 +73,7 @@ done
 ##########################################################
 header2 "Start Consul"
 
-## ~todo make all servers discoverable from bastion host
+## [x] todo make all servers discoverable from bastion host
 for i in `seq 0 "$((SERVER_NUMBER-1))"`; do
   log "Start Consul process on consul-server-$i"
   

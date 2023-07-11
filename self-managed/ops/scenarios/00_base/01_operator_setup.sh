@@ -12,10 +12,8 @@
 mkdir -p "${ASSETS}"
 mkdir -p "${LOGS}"
 
-# PATH=$PATH:/home/app/bin
-# SSH_OPTS="StrictHostKeyChecking=accept-new"
-
 ## Instruqt compatibility
+## [ ] [instruqt] check if this part is still needed
 if [[ ! -z "${INSTRUQT_PARTICIPANT_ID}" ]]; then
     FQDN_SUFFIX=".$INSTRUQT_PARTICIPANT_ID.svc.cluster.local"
 else
@@ -30,12 +28,23 @@ fi
 # || Begin           |
 # ++-----------------+
 
+## Checks if the monitoring suite needs to be started with this scenario
+## All the Getting Started scenarios on AWS and Azure will have this set 
+## to true to permit a single infrastructure provision to follow along
+## the whole tutorial collection.
+## Docker and Instruqt scenarios will have this set to false because
+## infrastructure for them is much faster.
+
 if [ "${START_MONITORING_SUITE}" == "true" ]; then
 
+  log "Cloud provider is: $SCENARIO_CLOUD_PROVIDER"
+  
   log "Configuring DNS for monitoring suite"
 
-  ## [warn] Cloud provider breaking point
+
+  ## [warn] [cloud provider] Cloud provider flow breaking point
   ## [feat] Make conditional check on Cloud provider
+
   ## The following steps only work on AWS. Use the reference link for ideas on
   ## how to make platform independent.  
   ## https://github.com/hashicorp-education/learn-nomad-getting-started/blob/main/shared/data-scripts/user-data-client.sh

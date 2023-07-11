@@ -9,8 +9,8 @@
 # ++-----------------+
 
 # Create necessary directories to operate
-mkdir -p ${ASSETS}
-mkdir -p ${LOGS}
+mkdir -p "${ASSETS}"
+mkdir -p "${LOGS}"
 
 # PATH=$PATH:/home/app/bin
 # SSH_OPTS="StrictHostKeyChecking=accept-new"
@@ -34,7 +34,7 @@ if [ "${START_MONITORING_SUITE}" == "true" ]; then
 
   log "Configuring DNS for monitoring suite"
 
-  ## [warn] Cloud provider breaking point
+  ## [warn] [cloud provider] Cloud provider flow breaking point
   ## [feat] Make conditional check on Cloud provider
   ## The following steps only work on AWS. Use the reference link for ideas on
   ## how to make platform independent.  
@@ -51,7 +51,7 @@ ${GRAFANA_URI} grafana
 EOT
 
   log "Starting monitoring suite on Bastion Host"
-  bash ${ASSETS}scenario/start_monitoring_suite.sh
+  bash "${ASSETS}scenario/start_monitoring_suite.sh"
 
 fi
 

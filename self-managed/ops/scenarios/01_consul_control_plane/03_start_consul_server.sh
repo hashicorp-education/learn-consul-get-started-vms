@@ -48,9 +48,17 @@ header2 "Copy Consul servers configuration files"
 ## [x] todo make all servers discoverable from bastion host
 for i in `seq 0 "$((SERVER_NUMBER-1))"`; do
 
-  ## [mark] this thing is ugly. Debug and check paths
-  log "Remove pre-existing configuration and stopping pre-existing Consul instances"
-  remote_exec consul-server-$i "sudo rm -rf ${CONSUL_CONFIG_DIR}* && \
+  ## [ux-diff] [cloud provider] UX differs across different Cloud providers
+  if [ "${SCENARIO_CLOUD_PROVIDER}" == "docker" ]; then
+
+    log "Environment is clean. Starting."
+
+  elif [ "${SCENARIO_CLOUD_PROVIDER}" == "aws" ]; then
+    ## [ ] [test] check if still works in AWS
+
+    ## [mark] this thing is ugly. Debug and check paths
+    log "Remove pre-existing configuration and stopping pre-existing Consul instances"
+    remote_exec consul-server-$i "sudo rm -rf ${CONSUL_CONFIG_DIR}* && \
                                   sudo mkdir -p ${CONSUL_CONFIG_DIR} && \
                                   sudo chown consul: ${CONSUL_CONFIG_DIR} && \
                                   sudo chmod g+w ${CONSUL_CONFIG_DIR} && \
@@ -59,12 +67,19 @@ for i in `seq 0 "$((SERVER_NUMBER-1))"`; do
                                   sudo chown consul: ${CONSUL_DATA_DIR} && \
                                   sudo chmod g+w ${CONSUL_DATA_DIR}"
   
-  _CONSUL_PID=`remote_exec consul-server-$i "pidof consul"`
-  if [ ! -z ${_CONSUL_PID} ]; then
-    remote_exec consul-server-$i "sudo kill -9 ${_CONSUL_PID}"
+    _CONSUL_PID=`remote_exec consul-server-$i "pidof consul"`
+    
+    if [ ! -z ${_CONSUL_PID} ]; then
+      remote_exec consul-server-$i "sudo kill -9 ${_CONSUL_PID}"
+    fi
+    
+  else 
+    log_err "Cloud provider $SCENARIO_CLOUD_PROVIDER is unsupported...exiting."
+    exit 245
   fi
-  
+
   log "Copying Configuration on consul-server-$i"
+  
   remote_copy consul-server-$i "${STEP_ASSETS}consul-server-$i/*" "${CONSUL_CONFIG_DIR}" 
 
 done
@@ -77,6 +92,11 @@ header2 "Start Consul"
 for i in `seq 0 "$((SERVER_NUMBER-1))"`; do
   log "Start Consul process on consul-server-$i"
   
+  ## [ux-diff] [cloud provider] UX differs across different Cloud providers
+  if [ "${SCENARIO_CLOUD_PROVIDER}" == "docker" ]; then
+    wait_for consul-server-$i
+  fi
+
   remote_exec consul-server-$i \
     "/usr/bin/consul agent \
     -log-file=/tmp/consul-server-$i.${DATACENTER}.${DOMAIN} \
@@ -84,7 +104,6 @@ for i in `seq 0 "$((SERVER_NUMBER-1))"`; do
 
   sleep 1
 done
-
 ##########################################################
 header2 "Configure ACL"
 

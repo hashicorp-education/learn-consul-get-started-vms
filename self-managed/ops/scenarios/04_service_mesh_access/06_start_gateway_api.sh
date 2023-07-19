@@ -41,7 +41,7 @@ node_name = "${NODE_NAME}"
 
 # Logging
 log_level = "${CONSUL_LOG_LEVEL}"
-enable_syslog = true
+enable_syslog = false
 
 # Data persistence
 data_dir = "${CONSUL_DATA_DIR}"

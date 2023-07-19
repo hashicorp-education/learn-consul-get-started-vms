@@ -22,7 +22,7 @@ header1 "Starting Consul client agents"
 ##########################################################
 header2 "Generate Consul clients configuration"
 
-for node in ${NODES_ARRAY[@]}; do
+for node in "${NODES_ARRAY[@]}"; do
   export NODE_NAME=${node}
   # export CONSUL_RETRY_JOIN
   header3 "Generate Consul client configuration for ${NODE_NAME}"
@@ -137,7 +137,7 @@ done
 ##########################################################
 header2 "Start Consul client agents"
 
-for node in ${NODES_ARRAY[@]}; do
+for node in "${NODES_ARRAY[@]}"; do
   export NODE_NAME=${node}
   log "Starting consul process on ${NODE_NAME}"
   remote_exec ${NODE_NAME} \
@@ -149,32 +149,41 @@ for node in ${NODES_ARRAY[@]}; do
 
 done
 
+
 ##########################################################
 header2 "Change DNS for client agents"
-
 ## [feat] [flow] Change DNS for client
 ## [ ] Check if it works on other Cloud providers
 ## [ ] Check if it works as expected
-for node in ${NODES_ARRAY[@]}; do
-  export NODE_NAME=${node}
-  log "Change DNS configuration on ${NODE_NAME}"
 
-  _consul_resolv=$(cat << EOF
+ ## [ux-diff] [cloud provider] UX differs across different Cloud providers
+  if [ "${SCENARIO_CLOUD_PROVIDER}" == "docker" ]; then
 
-domain ${CONSUL_DOMAIN}
-search ${CONSUL_DOMAIN}
-nameserver 127.0.0.1
+    log_warn "Change DNS for Docker is not yer supported. Use Docker DNS."
 
-EOF
-)
+  elif [ "${SCENARIO_CLOUD_PROVIDER}" == "aws" ]; then
+    ## [ ] [test] check if still works in AWS
 
-  # remote_exec ${NODE_NAME} \
-  #   "echo -n \"${_consul_resolv}\" | cat - /etc/resolv.conf | sudo tee /etc/resolv.conf"
-  
-  remote_exec ${NODE_NAME} \
-    "sudo iptables --table nat --append OUTPUT --destination localhost --protocol udp --match udp --dport 53 --jump REDIRECT --to-ports 8600 && \
-     sudo iptables --table nat --append OUTPUT --destination localhost --protocol tcp --match tcp --dport 53 --jump REDIRECT --to-ports 8600" 
+    for node in ${NODES_ARRAY[@]}; do
+      export NODE_NAME=${node}
+      log "Change DNS configuration on ${NODE_NAME}"
 
-  # sleep 1
-done
+      remote_exec ${NODE_NAME} \
+        "sudo iptables --table nat --append OUTPUT --destination localhost --protocol udp --match udp --dport 53 --jump REDIRECT --to-ports 8600 && \
+        sudo iptables --table nat --append OUTPUT --destination localhost --protocol tcp --match tcp --dport 53 --jump REDIRECT --to-ports 8600" 
 
+    done
+    
+  else 
+    log_err "Cloud provider $SCENARIO_CLOUD_PROVIDER is unsupported...exiting."
+    exit 245
+  fi
+
+# _consul_resolv=$(cat << EOF
+
+# domain ${CONSUL_DOMAIN}
+# search ${CONSUL_DOMAIN}
+# nameserver 127.0.0.1
+
+# EOF
+# )

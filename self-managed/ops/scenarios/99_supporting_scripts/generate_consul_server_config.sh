@@ -141,7 +141,7 @@ data_dir = "${CONSUL_DATA_DIR}"
 
 # Logging
 log_level = "${CONSUL_LOG_LEVEL}"
-enable_syslog = true
+enable_syslog = false
 
 ## Disable script checks
 enable_script_checks = false

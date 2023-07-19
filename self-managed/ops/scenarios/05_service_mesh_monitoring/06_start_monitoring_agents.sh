@@ -18,7 +18,7 @@ mkdir -p ${STEP_ASSETS}monitoring
 
 header2 "Consul server monitoring"
 
-## ~todo make all servers discoverable from bastion host
+## todo make all servers discoverable from bastion host
 for i in `seq 0 "$((SERVER_NUMBER-1))"`; do
 
   log "Generate Grafana Agent configuration for consul-server-$i "

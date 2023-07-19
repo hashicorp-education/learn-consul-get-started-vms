@@ -29,7 +29,6 @@ KEYS_DIR="./certs"
 # Generates new certificates at every run
 GEN_NEW_CERTS=${GEN_NEW_CERTS:-true}
 
-
 ## Import environment variables and functions
 source "./variables.env"
 
@@ -37,7 +36,16 @@ source "./variables.env"
 # || Begin           |
 # ++-----------------+
 
-pushd ${BUILD_DIR}base
+# +--------------------+ #
+# | BUILD BASE         | #
+# +--------------------+ #
+
+## Enter Image folder
+pushd ${BUILD_DIR}base > /dev/null 2>&1
+
+# +--------------------+ #
+# | GENERATE SSL CERTS | #
+# +--------------------+ #
 
 ## Generate SSH Keys
 ts_log "Generate SSH Keys"
@@ -62,49 +70,183 @@ if [ "$(ls -A ${KEYS_DIR})" ]; then
 else
   ts_log "Creating certificates in ${KEYS_DIR}"
 
-  pushd ${KEYS_DIR}
+  ## Enter certs folder
+  pushd ${KEYS_DIR} > /dev/null 2>&1
 
   ## Generate SSH keys for containers
   ssh-keygen -t rsa -b 4096 -f ./id_rsa -N ""
 
-  popd 
+  ## Exit certs folder
+  popd > /dev/null 2>&1
 fi
 
+ts_log "Building \033[1m\033[33m${DOCKER_REPOSITORY}/${DOCKER_BASE_IMAGE}\033[0m"
 
-## Build base image
-
-ts_log "Build Docker base image"
-
-echo -e "- \033[1m\033[31m[Consul]\033[0m: ${CONSUL_VERSION}"
-echo -e "- \033[1m\033[35m[Envoy]\033[0m: ${ENVOY_VERSION}"
-
-IMAGE_TAG="${CONSUL_VERSION}"
+IMAGE_TAG="${DOCKER_REPOSITORY}/${DOCKER_BASE_IMAGE}:latest"
 LATEST_TAG="-t ${DOCKER_REPOSITORY}/${DOCKER_BASE_IMAGE}:latest"
 LS_TAG="-t ${DOCKER_REPOSITORY}/${DOCKER_BASE_IMAGE}:${DOCKER_REPOSITORY}"
 
-## Moving into the image folder
-## The folder should contain the Dockerfile for the image
-
-ts_log "Building \033[1m\033[33m${DOCKER_REPOSITORY}/${DOCKER_BASE_IMAGE}:v${IMAGE_TAG}\033[0m"
-
-
-
 ## Build Docker image
 DOCKER_BUILDKIT=1 docker build \
-  --build-arg CONSUL_VERSION=${CONSUL_VERSION} \
-  --build-arg ENVOY_VERSION=v${ENVOY_VERSION} \
-  -t "${DOCKER_REPOSITORY}/${DOCKER_BASE_IMAGE}:v${IMAGE_TAG}" ${LATEST_TAG} ${LS_TAG} . > /dev/null 2>&1
+  -t "${IMAGE_TAG}" ${LATEST_TAG} ${LS_TAG} . > /dev/null 2>&1
 
 if [ $? != 0 ]; then
   ts_log "\033[1m\033[31m[ERROR]\033[0m - Failed build for ${DOCKER_REPOSITORY}/${DOCKER_BASE_IMAGE}:v${CONSUL_TAG_VERSION}...exiting."
   exit 1
 fi
 
-popd
+## Exit Image folder
+popd > /dev/null 2>&1
 
+
+# +--------------------+ #
+# | BUILD BASE_CONSUL  | #
+# +--------------------+ #
+
+## Enter Image folder
+pushd ${BUILD_DIR}base-consul > /dev/null 2>&1
+
+ts_log "Building \033[1m\033[33m${DOCKER_REPOSITORY}/${DOCKER_BASE_CONSUL}\033[0m"
+
+IMAGE_TAG="${DOCKER_REPOSITORY}/${DOCKER_BASE_CONSUL}:v${CONSUL_VERSION}"
+LATEST_TAG="-t ${DOCKER_REPOSITORY}/${DOCKER_BASE_CONSUL}:latest"
+LS_TAG="-t ${DOCKER_REPOSITORY}/${DOCKER_BASE_CONSUL}:${DOCKER_REPOSITORY}"
+
+## Build Docker image
+DOCKER_BUILDKIT=1 docker build \
+  --build-arg CONSUL_VERSION=${CONSUL_VERSION} \
+  --build-arg ENVOY_VERSION=v${ENVOY_VERSION} \
+  --build-arg BASE_IMAGE="${DOCKER_REPOSITORY}/${DOCKER_BASE_IMAGE}:latest" \
+  -t "${IMAGE_TAG}" ${LATEST_TAG} ${LS_TAG} . > /dev/null 2>&1
+
+if [ $? != 0 ]; then
+  ts_log "\033[1m\033[31m[ERROR]\033[0m - Failed build for ${DOCKER_REPOSITORY}/${DOCKER_BASE_CONSUL}...exiting."
+  exit 1
+fi
+
+## Exit Image folder
+popd > /dev/null 2>&1
+
+
+# +--------------------+ #
+# | BUILD HASHICUPS-*  | #
+# +--------------------+ #
+
+# +--------------------+ #
+# | DATABASE           | #
+# +--------------------+ #
+
+IMAGE_NAME="hashicups-database"
+pushd ${IMAGE_NAME} > /dev/null 2>&1
+
+ts_log "Building \033[1m\033[33m${DOCKER_REPOSITORY}/${IMAGE_NAME}\033[0m"
+
+IMAGE_TAG="${DOCKER_REPOSITORY}/${IMAGE_NAME}:v${CONSUL_VERSION}"
+LATEST_TAG="-t ${DOCKER_REPOSITORY}/${IMAGE_NAME}:latest"
+LS_TAG="-t ${DOCKER_REPOSITORY}/${IMAGE_NAME}:${DOCKER_REPOSITORY}"
+
+## Build Docker image
+DOCKER_BUILDKIT=1 docker build \
+  --build-arg BASE_IMAGE="${DOCKER_REPOSITORY}/${DOCKER_BASE_CONSUL}:latest" \
+  -t "${IMAGE_TAG}" ${LATEST_TAG} ${LS_TAG} . > /dev/null 2>&1
+
+if [ $? != 0 ]; then
+  ts_log "\033[1m\033[31m[ERROR]\033[0m - Failed build for ${DOCKER_REPOSITORY}/${IMAGE_NAME}...exiting."
+  exit 1
+fi
+
+popd > /dev/null 2>&1
+
+# +--------------------+ #
+# | API                | #
+# +--------------------+ #
+
+IMAGE_NAME="hashicups-api"
+pushd ${IMAGE_NAME} > /dev/null 2>&1
+
+ts_log "Building \033[1m\033[33m${DOCKER_REPOSITORY}/${IMAGE_NAME}\033[0m"
+
+IMAGE_TAG="${DOCKER_REPOSITORY}/${IMAGE_NAME}:v${CONSUL_VERSION}"
+LATEST_TAG="-t ${DOCKER_REPOSITORY}/${IMAGE_NAME}:latest"
+LS_TAG="-t ${DOCKER_REPOSITORY}/${IMAGE_NAME}:${DOCKER_REPOSITORY}"
+
+## Build Docker image
+DOCKER_BUILDKIT=1 docker build \
+  --build-arg APP1_VERSION="${HC_API_PUBLIC_VERSION}" \
+  --build-arg APP2_VERSION="${HC_API_PRODUCT_VERSION}" \
+  --build-arg APP3_VERSION="${HC_API_PAYMENTS_VERSION}" \
+  --build-arg BASE_IMAGE="${DOCKER_REPOSITORY}/${DOCKER_BASE_CONSUL}:latest" \
+  -t "${IMAGE_TAG}" ${LATEST_TAG} ${LS_TAG} . > /dev/null 2>&1
+
+if [ $? != 0 ]; then
+  ts_log "\033[1m\033[31m[ERROR]\033[0m - Failed build for ${DOCKER_REPOSITORY}/${IMAGE_NAME}...exiting."
+  exit 1
+fi
+
+popd > /dev/null 2>&1
+
+# +--------------------+ #
+# | FRONTEND           | #
+# +--------------------+ #
+
+IMAGE_NAME="hashicups-frontend"
+pushd ${IMAGE_NAME} > /dev/null 2>&1
+
+ts_log "Building \033[1m\033[33m${DOCKER_REPOSITORY}/${IMAGE_NAME}\033[0m"
+
+IMAGE_TAG="${DOCKER_REPOSITORY}/${IMAGE_NAME}:v${CONSUL_VERSION}"
+LATEST_TAG="-t ${DOCKER_REPOSITORY}/${IMAGE_NAME}:latest"
+LS_TAG="-t ${DOCKER_REPOSITORY}/${IMAGE_NAME}:${DOCKER_REPOSITORY}"
+
+## Build Docker image
+DOCKER_BUILDKIT=1 docker build \
+  --build-arg APP_VERSION="" \
+  --build-arg BASE_IMAGE="${DOCKER_REPOSITORY}/${DOCKER_BASE_CONSUL}:latest" \
+  -t "${IMAGE_TAG}" ${LATEST_TAG} ${LS_TAG} . > /dev/null 2>&1
+
+if [ $? != 0 ]; then
+  ts_log "\033[1m\033[31m[ERROR]\033[0m - Failed build for ${DOCKER_REPOSITORY}/${IMAGE_NAME}...exiting."
+  exit 1
+fi
+
+popd > /dev/null 2>&1
+
+# +--------------------+ #
+# | NGINX              | #
+# +--------------------+ #
+
+IMAGE_NAME="hashicups-nginx"
+pushd ${IMAGE_NAME} > /dev/null 2>&1
+
+ts_log "Building \033[1m\033[33m${DOCKER_REPOSITORY}/${IMAGE_NAME}\033[0m"
+
+IMAGE_TAG="${DOCKER_REPOSITORY}/${IMAGE_NAME}:v${CONSUL_VERSION}"
+LATEST_TAG="-t ${DOCKER_REPOSITORY}/${IMAGE_NAME}:latest"
+LS_TAG="-t ${DOCKER_REPOSITORY}/${IMAGE_NAME}:${DOCKER_REPOSITORY}"
+
+## Build Docker image
+DOCKER_BUILDKIT=1 docker build \
+  --build-arg APP_VERSION="" \
+  --build-arg BASE_IMAGE="${DOCKER_REPOSITORY}/${DOCKER_BASE_CONSUL}:latest" \
+  -t "${IMAGE_TAG}" ${LATEST_TAG} ${LS_TAG} . > /dev/null 2>&1
+
+if [ $? != 0 ]; then
+  ts_log "\033[1m\033[31m[ERROR]\033[0m - Failed build for ${DOCKER_REPOSITORY}/${IMAGE_NAME}...exiting."
+  exit 1
+fi
+
+popd > /dev/null 2>&1
+
+# +---------------------+ #
+# | LIST CREATED IMAGES | #
+# +---------------------+ #
 
 ## List created images
-
 ts_log "\033[1m\033[33mImages generated\033[0m"
-
 docker images --filter=reference="*/*:${DOCKER_REPOSITORY}"
+
+## Information about Applications installed
+ts_log "\033[1m\033[33mVersion Info:\033[0m"
+echo -e "- \033[1m\033[31m[Consul]\033[0m: ${CONSUL_VERSION}"
+echo -e "- \033[1m\033[35m[Envoy]\033[0m: ${ENVOY_VERSION}"
+

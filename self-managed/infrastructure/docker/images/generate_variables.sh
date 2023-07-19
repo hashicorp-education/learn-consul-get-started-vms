@@ -62,34 +62,45 @@ function get_latest_app_version() {
 ## Sets up a mock Docker repo, images will be built locally
 DOCKER_REPOSITORY="learn-consul"
 DOCKER_BASE_IMAGE="base-image"
+DOCKER_BASE_CONSUL="base-consul"
 
 ### VERSIONS
 ## HashiCorp tools
-CONSUL_LATEST=`get_latest_consul_version`
-CONSUL_VERSION=${CONSUL_VERSION:-$CONSUL_LATEST}
+# CONSUL_LATEST=`get_latest_consul_version`
+# CONSUL_VERSION=${CONSUL_VERSION:-$CONSUL_LATEST}
 
+## The script is intended to produce Docker images for the latest available 
+## Consul version, with the latest compatible Envoy version.
+## [warn] This might only work with GNU version of sed and grep.
+LAST_CONSUL_VERSION=`get_latest_consul_version`
+LAST_COMPATIBLE_ENVOY_VERSION=`get_envoy_version ${LAST_CONSUL_VERSION}`
+
+## [core] [flow] tune here to chenge HashiCups Configuration
+## HashiCups
+HC_DB_VERSION="v0.0.22"
+HC_API_PAYMENTS_VERSION="latest"
+HC_API_PRODUCT_VERSION="v0.0.22"
+HC_API_PUBLIC_VERSION="v0.0.7"
+HC_FE_VERSION="v1.0.9"
+
+
+## The script is used to produce a valid configuration for `build_images.sh`
+## The configuration will be saved on a file, sourced by the script.
+OUTPUT_FILE=./variables.env
 
 # ++-----------------+
 # || Begin           |
 # ++-----------------+
 
-## The script is intended to produce Docker images for the latest available Consul
-## version, with the latest compatible Envoy version.
+echo "#!/usr/bin/env bash"                                  > ${OUTPUT_FILE}
 
-## Also the same is true for the HashiCups services.
+echo "CONSUL_VERSION=$LAST_CONSUL_VERSION"                  >> ${OUTPUT_FILE}
+echo "ENVOY_VERSION=$LAST_COMPATIBLE_ENVOY_VERSION"         >> ${OUTPUT_FILE}
 
-OUTPUT_FILE=./variables.env
+echo "DOCKER_REPOSITORY=${DOCKER_REPOSITORY}"               >> ${OUTPUT_FILE}
+echo "DOCKER_BASE_IMAGE=${DOCKER_BASE_IMAGE}"               >> ${OUTPUT_FILE}
+echo "DOCKER_BASE_CONSUL=${DOCKER_BASE_CONSUL}"             >> ${OUTPUT_FILE}
 
-## [warn] This might only work with GNU version of sed and grep.
-
-LAST_CONSUL_VERSION=`get_latest_consul_version`
-LAST_COMPATIBLE_ENVOY_VERSION=`get_envoy_version ${LAST_CONSUL_VERSION}`
-
-echo "#!/usr/bin/env bash"                          > ${OUTPUT_FILE}
-
-echo "CONSUL_VERSION=$LAST_CONSUL_VERSION"          >> ${OUTPUT_FILE}
-echo "ENVOY_VERSION=$LAST_COMPATIBLE_ENVOY_VERSION" >> ${OUTPUT_FILE}
-
-echo "DOCKER_REPOSITORY=${DOCKER_REPOSITORY}"       >> ${OUTPUT_FILE}
-echo "DOCKER_BASE_IMAGE=${DOCKER_BASE_IMAGE}"       >> ${OUTPUT_FILE}
-
+echo "HC_API_PAYMENTS_VERSION=${HC_API_PAYMENTS_VERSION}"   >> ${OUTPUT_FILE}
+echo "HC_API_PRODUCT_VERSION=${HC_API_PRODUCT_VERSION}"     >> ${OUTPUT_FILE}
+echo "HC_API_PUBLIC_VERSION=${HC_API_PUBLIC_VERSION}"       >> ${OUTPUT_FILE}

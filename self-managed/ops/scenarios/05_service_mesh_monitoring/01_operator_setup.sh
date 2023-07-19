@@ -41,7 +41,7 @@ if [ "${START_MONITORING_SUITE}" == "true" ]; then
   if [ "${SCENARIO_CLOUD_PROVIDER}" == "docker" ]; then
     log "Cloud provider is: $SCENARIO_CLOUD_PROVIDER"
 
-    export PROMETHEUS_URI=prometheus
+    export PROMETHEUS_URI=mimir
     export GRAFANA_URI=grafana
     export LOKI_URI=loki
 
@@ -54,7 +54,8 @@ if [ "${START_MONITORING_SUITE}" == "true" ]; then
     ## https://github.com/hashicorp-education/learn-nomad-getting-started/blob/main/shared/data-scripts/user-data-client.sh
     export PROMETHEUS_URI=$(curl -s http://instance-data/latest/meta-data/local-ipv4)
     export GRAFANA_URI=$(curl -s http://instance-data/latest/meta-data/public-ipv4)
-
+    export LOKI_URI=$(curl -s http://instance-data/latest/meta-data/local-ipv4)
+    
     log "Configuring DNS for monitoring suite"
     
     # sudo cat <<EOT >> /etc/hosts

@@ -260,6 +260,10 @@ elif [ "$1" == "scenario_diff" ]; then
 
   scenarios_diff $2 $3
 
+elif [ "$1" == "propagate" ]; then
+
+  propagate_scenario_file $2 $3
+  exit 0
 fi
 
 

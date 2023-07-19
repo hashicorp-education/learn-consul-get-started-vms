@@ -45,7 +45,6 @@ execute_supporting_script "generate_consul_server_config.sh"
 ##########################################################
 header2 "Copy Consul servers configuration files"
 
-## [x] todo make all servers discoverable from bastion host
 for i in `seq 0 "$((SERVER_NUMBER-1))"`; do
 
   ## [ux-diff] [cloud provider] UX differs across different Cloud providers
@@ -88,7 +87,6 @@ done
 ##########################################################
 header2 "Start Consul"
 
-## [x] todo make all servers discoverable from bastion host
 for i in `seq 0 "$((SERVER_NUMBER-1))"`; do
   log "Start Consul process on consul-server-$i"
   

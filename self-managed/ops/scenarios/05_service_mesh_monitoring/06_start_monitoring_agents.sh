@@ -43,7 +43,7 @@ logs:
   configs:
   - name: default
     clients:
-      - url: http://${PROMETHEUS_URI}:3100/loki/api/v1/push
+      - url: http://${LOKI_URI}:3100/loki/api/v1/push
     positions:
       filename: /tmp/positions.yaml
     scrape_configs:
@@ -103,7 +103,7 @@ logs:
   configs:
   - name: default
     clients:
-      - url: http://${PROMETHEUS_URI}:3100/loki/api/v1/push
+      - url: http://${LOKI_URI}:3100/loki/api/v1/push
     positions:
       filename: /tmp/positions.yaml
     scrape_configs:

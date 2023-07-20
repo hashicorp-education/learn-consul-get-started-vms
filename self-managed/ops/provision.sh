@@ -275,6 +275,12 @@ elif [ "$1" == "test_logs" ]; then
 
   test_logs
   exit 0
+elif [ "$1" == "list_scenarios" ]; then
+  header2 List Avaiable Scenarios
+  for i in `_print_available_scenarios | grep "available scenarios:" | grep -oP "\s[^:]*$"`; do
+    echo "${i:0:2}  -  $i"
+  done
+  exit 0
 fi
 
 

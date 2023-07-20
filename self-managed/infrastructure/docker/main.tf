@@ -28,8 +28,8 @@ resource "docker_network" "primary_network" {
 # ----------------- #
 
 resource "docker_container" "bastion_host" {
-  name  = "bastion"
-  image = "learn-consul/base-consul:learn-consul"
+  name     = "bastion"
+  image    = "learn-consul/base-consul:learn-consul"
   hostname = "bastion"
   # image = docker_image.base_image.image_id
   # provider = docker.world
@@ -50,7 +50,7 @@ resource "docker_container" "bastion_host" {
   connection {
     type        = "ssh"
     user        = "admin"
-    private_key = "${file("./images/base/certs/id_rsa")}"
+    private_key = file("./images/base/certs/id_rsa")
     host        = "127.0.0.1"
     port        = 8022
   }
@@ -78,9 +78,9 @@ resource "docker_container" "bastion_host" {
 # ----------------- #
 
 resource "docker_container" "consul_server" {
-  name  = "consul-server-${count.index}"
-  count = var.server_number
-  image = "learn-consul/base-consul:learn-consul"
+  name     = "consul-server-${count.index}"
+  count    = var.server_number
+  image    = "learn-consul/base-consul:learn-consul"
   hostname = "consul-server-${count.index}"
   # image = docker_image.base_image.image_id
   # provider = docker.world
@@ -94,7 +94,7 @@ resource "docker_container" "consul_server" {
 
   ports {
     internal = "8443"
-    external = "${format("%d", count.index + 8443)}"
+    external = format("%d", count.index + 8443)
   }
 
 }
@@ -104,8 +104,8 @@ resource "docker_container" "consul_server" {
 # ----------------- #
 
 resource "docker_container" "gateway_api" {
-  name  = "gateway_api"
-  image = "learn-consul/base-consul:learn-consul"
+  name     = "gateway_api"
+  image    = "learn-consul/base-consul:learn-consul"
   hostname = "gateway-api"
   # image = docker_image.base_image.image_id
   # provider = docker.world
@@ -130,8 +130,8 @@ resource "docker_container" "gateway_api" {
 
 
 resource "docker_container" "hashicups_nginx" {
-  name  = "hashicups_nginx"
-  image = "learn-consul/hashicups-nginx:learn-consul"
+  name     = "hashicups_nginx"
+  image    = "learn-consul/hashicups-nginx:learn-consul"
   hostname = "hashicups-nginx"
   networks_advanced {
     name = docker_network.primary_network.id
@@ -149,8 +149,8 @@ resource "docker_container" "hashicups_nginx" {
 }
 
 resource "docker_container" "hashicups_frontend" {
-  name  = "hashicups_frontend"
-  image = "learn-consul/hashicups-frontend:learn-consul"
+  name     = "hashicups_frontend"
+  image    = "learn-consul/hashicups-frontend:learn-consul"
   hostname = "hashicups-frontend"
   networks_advanced {
     name = docker_network.primary_network.id
@@ -163,8 +163,8 @@ resource "docker_container" "hashicups_frontend" {
 }
 
 resource "docker_container" "hashicups_api" {
-  name  = "hashicups_api"
-  image = "learn-consul/hashicups-api:learn-consul"
+  name     = "hashicups_api"
+  image    = "learn-consul/hashicups-api:learn-consul"
   hostname = "hashicups-api"
   networks_advanced {
     name = docker_network.primary_network.id
@@ -177,8 +177,8 @@ resource "docker_container" "hashicups_api" {
 }
 
 resource "docker_container" "hashicups_db" {
-  name  = "hashicups_db"
-  image = "learn-consul/hashicups-database:learn-consul"
+  name     = "hashicups_db"
+  image    = "learn-consul/hashicups-database:learn-consul"
   hostname = "hashicups-db"
   networks_advanced {
     name = docker_network.primary_network.id
@@ -196,8 +196,8 @@ resource "docker_container" "hashicups_db" {
 # ----------------- #
 
 resource "docker_container" "grafana" {
-  name  = "grafana"
-  image = "grafana/grafana:latest"
+  name     = "grafana"
+  image    = "grafana/grafana:latest"
   hostname = "grafana"
 
   networks_advanced {
@@ -238,10 +238,10 @@ resource "docker_container" "grafana" {
 }
 
 resource "docker_container" "loki" {
-  name  = "loki"
-  image = "grafana/loki:main"
+  name     = "loki"
+  image    = "grafana/loki:main"
   hostname = "loki"
-  
+
   networks_advanced {
     name = docker_network.primary_network.id
   }
@@ -256,8 +256,8 @@ resource "docker_container" "loki" {
 }
 
 resource "docker_container" "mimir" {
-  name  = "mimir"
-  image = "grafana/mimir:latest"
+  name     = "mimir"
+  image    = "grafana/mimir:latest"
   hostname = "mimir"
   networks_advanced {
     name = docker_network.primary_network.id

@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+# ++-----------
+# ||   03 - Start Consul servers
+# ++------
+header1 "Deploy Consul on VMs"
+
 # ++-----------------+
 # || Variables       |
 # ++-----------------+
@@ -28,10 +33,8 @@ export STEP_ASSETS="${ASSETS}scenario/conf/"
 # || Begin           |
 # ++-----------------+
 
-header1 "Starting Consul server"
-
 ##########################################################
-header2 "Generate Consul servers configuration"
+header2 "Generate Consul server configuration"
 
 ## This needs to be exported here to work inside the script.
 ## [bug] [conf] Configuration generated does not work for different dc.domain
@@ -40,23 +43,24 @@ export CONSUL_DATACENTER=${DATACENTER}
 export CONSUL_SERVER_NUMBER=${SERVER_NUMBER}
 
 ## [cmd] [script] generate_consul_server_config.sh
+log -l WARN -t '[SCRIPT]' "Generate Consul server config"
 execute_supporting_script "generate_consul_server_config.sh"
 
 ##########################################################
-header2 "Copy Consul servers configuration files"
+header3 "Copy configuration on Consul server nodes"
 
 for i in `seq 0 "$((SERVER_NUMBER-1))"`; do
 
   ## [ux-diff] [cloud provider] UX differs across different Cloud providers
   if [ "${SCENARIO_CLOUD_PROVIDER}" == "docker" ]; then
 
-    log "Environment is clean. Starting."
+    log_debug "Environment is clean. Starting."
 
   elif [ "${SCENARIO_CLOUD_PROVIDER}" == "aws" ]; then
     ## [ ] [test] check if still works in AWS
 
     ## [mark] this thing is ugly. Debug and check paths
-    log "Remove pre-existing configuration and stopping pre-existing Consul instances"
+    log_debug  "Remove pre-existing configuration and stopping pre-existing Consul instances"
     remote_exec consul-server-$i "sudo rm -rf ${CONSUL_CONFIG_DIR}* && \
                                   sudo mkdir -p ${CONSUL_CONFIG_DIR} && \
                                   sudo chown consul: ${CONSUL_CONFIG_DIR} && \
@@ -85,7 +89,7 @@ done
 
 
 ##########################################################
-header2 "Start Consul"
+header2 "Start Consul server"
 
 for i in `seq 0 "$((SERVER_NUMBER-1))"`; do
   log "Start Consul process on consul-server-$i"
@@ -103,7 +107,7 @@ for i in `seq 0 "$((SERVER_NUMBER-1))"`; do
   sleep 1
 done
 ##########################################################
-header2 "Configure ACL"
+header2 "Configure Consul CLI to interact with Consul server"
 
 ## Consul CLI Configuration
 export CONSUL_HTTP_ADDR="https://consul-server-0:8443"
@@ -111,7 +115,7 @@ export CONSUL_HTTP_SSL=true
 export CONSUL_CACERT="${STEP_ASSETS}secrets/consul-agent-ca.pem"
 export CONSUL_TLS_SERVER_NAME="server.${DATACENTER}.${DOMAIN}"
 
-log "ACL Bootstrap"
+header2 "Bootstrap ACLs"
 
 for i in `seq 1 9`; do
 
@@ -132,12 +136,18 @@ for i in `seq 1 9`; do
   fi
 
 done
+  log "ACL system bootstrapped"
 
 ## Consul CLI Configuration
 export CONSUL_HTTP_TOKEN=`cat ${STEP_ASSETS}secrets/acl-token-bootstrap.json | jq -r ".SecretID"`
 
 ##########################################################
-header2 "Configure servers token"
+header2 "Create server tokens"
 
 ## [cmd] [script] generate_consul_server_tokens.sh
+log -l WARN -t '[SCRIPT]' "Generate Consul server tokens"
 execute_supporting_script "generate_consul_server_tokens.sh"
+
+## Generate list of created files during scenario step
+## The list is appended to the $LOG_FILES_CREATED file
+get_created_files

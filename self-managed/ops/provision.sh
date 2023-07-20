@@ -39,7 +39,7 @@ clean_env() {
 
 ## Scenario Library
 
-## [crit] FLOW CRITICAL POINT !!! - Scenario PATHS configuration
+## [core] FLOW CRITICAL POINT !!! - Scenario PATHS configuration
 ## The ASSETS variable is overwritten several times during execution
 ## todo: Find a more elegant way to get out of this bottleneck.
 
@@ -78,14 +78,13 @@ source ${SCENARIOS_FOLDER}/00_shared_functions.env
 source ${SCENARIOS_FOLDER}/10_scenario_functions.env
 ## Infrastructure related functions. Depends on 00_*.env. Not imported into provision.sh
 source ${SCENARIOS_FOLDER}/20_infrastructure_functions.env
-## Infrastructure related functions. Depends on 00_*.env. Not imported into provision.sh
+## Random functions. Mostly scenarios files and folders tools
 source ${SCENARIOS_FOLDER}/30_utility_functions.env
 
 ## Scenario specific environment. Generated dynamically.
 ## UNCHARTED: Currently the tool supports only single scenario running.
 ##              Only single scenario use cases are tested at this time of 
 ##              development. 
-## [ ] Check PATHS for existence
 ## If scenario file does not exist the final script might not work.
 ## If this file does not exist we should fallback to local execution and print a 
 ## warning because the resulting scripts might not work as-is.
@@ -94,12 +93,18 @@ source ${SCENARIOS_FOLDER}/30_utility_functions.env
 ## at the moment counts as default state detection (possibly not the only factor)
 SCENARIO_OUTPUT_FOLDER="${ASSETS}scenario/"
 
+
+########## ------------------------------------------------
+header0 "CONSUL SCENARIO DEPLOYMENT TOOL"
+###### -----------------------------------------------
+
+header2 "Testing environment variables for scenario"
+
 ## Infrastructure creation creates a "state file", named `scenario_env.env` with 
 ## variables required to locate and connect to the remote scenario. If the state 
 ## file is not present you are either trying to create one (via creating infra)
 ## or you are testing the content creation. When possible will reverse to 
 ## dry_run version of the function (produce output but don't apply scripts).
-
 if [ -f "${SCENARIO_OUTPUT_FOLDER}scenario_env.env" ]; then
 
   ## @ASSETS_flow
@@ -188,7 +193,7 @@ if   [ "$1" == "clean" ]; then
   exit 0
 elif [ "$1" == "infra" ]; then
   ########## ------------------------------------------------
-  header1     "DEPLOY SCENARIO INFRASTRUCTURE"
+  header2     "DEPLOY SCENARIO INFRASTRUCTURE"
   ###### -----------------------------------------------
   ## [feat] Deploy infrastructure directly from the script
   ##  todo Spins up infrastructure for scenario. 
@@ -201,7 +206,8 @@ elif [ "$1" == "infra" ]; then
   exit 0
 elif [ "$1" == "operate" ]; then
   ########## ------------------------------------------------
-  header1     "OPERATE SCENARIO"
+  header2     "OPERATE SCENARIO"
+  log "Operating scenario $2"
   ###### -----------------------------------------------
   ## Generates scenario operate file and runs it on bastion host. 
   ## Scenario file is composed from the scenario folder and is going to be 
@@ -223,7 +229,8 @@ elif [ "$1" == "operate" ]; then
 
 elif [ "$1" == "solve" ]; then
   ########## ------------------------------------------------
-  header1     "SOLVE SCENARIO"
+  header2     "SOLVE SCENARIO"
+  log "Solving scenario $2"
   ###### -----------------------------------------------
   ## [info] Generates scenario solution file and runs it on bastion host. 
   ## Scenario file is composed from the scenario folder and is going to be 
@@ -238,7 +245,7 @@ elif [ "$1" == "solve" ]; then
   exit 0
 elif [ "$1" == "check" ]; then
   ########## ------------------------------------------------
-  header1     "CHECK SCENARIO"
+  header2     "CHECK SCENARIO"
   ###### -----------------------------------------------
   ##  [info] Generates scenario check file and runs it on bastion host. 
   ## Scenario file is composed from the scenario folder and is going to be 
@@ -263,6 +270,10 @@ elif [ "$1" == "scenario_diff" ]; then
 elif [ "$1" == "propagate" ]; then
 
   propagate_scenario_file $2 $3
+  exit 0
+elif [ "$1" == "test_logs" ]; then
+
+  test_logs
   exit 0
 fi
 

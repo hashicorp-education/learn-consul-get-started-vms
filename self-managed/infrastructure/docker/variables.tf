@@ -101,3 +101,8 @@ variable "scenario" {
   description = "Prerequisites scenario to run at the end of infrastructure provision"
   default     = "00_base"
 }
+
+variable "log_level" {
+  description = "Log level for the scenario provisioning script. Allowed values are 0,1,2,3,4"
+  default     = "2"
+}

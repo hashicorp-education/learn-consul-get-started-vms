@@ -3,6 +3,7 @@
 # ++-----------
 # ||   02 - Start HashiCups Application
 # ++------
+header1 "Prerequisites - Starting HashiCups Application"
 
 # ++-----------------+
 # || Variables       |
@@ -12,7 +13,6 @@
 # ++-----------------+
 # || Begin           |
 # ++-----------------+
-header1 "Starting Application"
 
 ## [ux-diff] [cloud provider] UX differs across different Cloud providers
 if [ "${SCENARIO_CLOUD_PROVIDER}" == "docker" ]; then
@@ -60,3 +60,8 @@ log "HashiCups Frontend Started"
 header3 "Starting Nginx"
 remote_exec hashicups-nginx "bash ~/start_service.sh" > /dev/null 2>&1
 log "HashiCups Nginx Started"
+
+
+## Generate list of created files during scenario step
+## The list is appended to the $LOG_FILES_CREATED file
+get_created_files

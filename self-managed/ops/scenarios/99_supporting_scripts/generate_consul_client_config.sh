@@ -4,15 +4,13 @@
 # || Functions       |
 # ++-----------------+
 ## Prints a line on stdout prepended with date and time
+## Prints a line on stdout prepended with date and time
 _log() {
-  echo -e "\033[1m["$(date +"%Y-%d-%d %H:%M:%S")"][`basename $0`] - ${@}\033[0m"
+  echo -e "\033[1m["$(date +"%Y-%d-%d %H:%M:%S")"] -- ${@}\033[0m"
 }
 
 _header() {
-  echo -e "\033[1m\033[32m["$(date +"%Y-%d-%d %H:%M:%S")"][`basename $0`] ${@}\033[0m"
-  # echo -e "\033[1m\033[32m #### - ${@}\033[0m"
-  # DEC_HEAD="\033[1m\033[32m[####] \033[0m\033[1m"
-  # _log "${DEC_HEAD}${@}"  
+  echo -e "\033[1m[$(date +'%Y-%d-%d %H:%M:%S')]\033[1m\033[33m [`basename $0`] - ${@}\033[0m"  
 }
 
 _log_err() {

@@ -60,3 +60,8 @@ log "HashiCups Frontend Started"
 header3 "Starting Nginx"
 remote_exec hashicups-nginx "bash ~/start_service.sh" > /dev/null 2>&1
 log "HashiCups Nginx Started"
+
+
+## Generate list of created files during scenario step
+## The list is appended to the $LOG_FILES_CREATED file
+get_created_files

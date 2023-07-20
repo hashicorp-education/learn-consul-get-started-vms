@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+# ++-----------
+# ||   04 - Start Consul clients (Service Discovery)
+# ++------
+header1 "Register your services to Consul"
+
 # ++-----------------+
 # || Variables       |
 # ++-----------------+
@@ -12,7 +17,7 @@ export NODES_ARRAY=( "hashicups-db" "hashicups-api" "hashicups-frontend" "hashic
 # || Begin           |
 # ++-----------------+
 
-header1 "Starting Consul client agents"
+# header1 "Starting Consul client agents"
 
 # log "Cleaning previous configfuration assets generated"
 # for node in ${NODES_ARRAY[@]}; do
@@ -25,14 +30,14 @@ header2 "Generate Consul clients configuration"
 for node in "${NODES_ARRAY[@]}"; do
   export NODE_NAME=${node}
   # export CONSUL_RETRY_JOIN
-  header3 "Generate Consul client configuration for ${NODE_NAME}"
+  header3 "Generate configuration for ${NODE_NAME} agent"
 
   ## [cmd] [script] generate_consul_client_config.sh
-  log "[EXTERNAL SCRIPT] - Generate Consul config"  
+  log -l WARN -t '[SCRIPT]' "Generate Consul config"  
   execute_supporting_script "generate_consul_client_config.sh"
 
 
-  log "Generate client tokens"
+  log_debug "Generate client ACL tokens"
 
   tee ${STEP_ASSETS}acl-policy-${NODE_NAME}.hcl > /dev/null << EOF
 # Allow the service and its sidecar proxy to register into the catalog.
@@ -103,7 +108,7 @@ EOF
 
   ## [cmd] [script] generate_consul_service_config.sh
   ## [ ] move service definition map outside
-  log "[EXTERNAL SCRIPT] - Generate services config"
+  log -l WARN -t '[SCRIPT]' "Generate Consul service config"
   execute_supporting_script "generate_consul_service_config.sh"
 
   unset _agent_token
@@ -112,7 +117,7 @@ EOF
   ## into Consul configuration
   cp ${STEP_ASSETS}${NODE_NAME}/svc/service_discovery/*.hcl "${STEP_ASSETS}${NODE_NAME}"
 
-  log "Clean remote node"
+  log_debug "Clean remote node"
   
   remote_exec ${NODE_NAME} "sudo rm -rf ${CONSUL_CONFIG_DIR}* && \
                             sudo rm -rf ${CONSUL_DATA_DIR}* && \
@@ -130,15 +135,16 @@ EOF
     remote_exec ${NODE_NAME} "sudo kill -9 ${_ENVOY_PID}"
   fi
 
-  log "Copy configuration on client nodes"
+  log_debug "Copy configuration on client nodes"
   remote_copy ${NODE_NAME} "${STEP_ASSETS}${NODE_NAME}/*" "${CONSUL_CONFIG_DIR}" 
 done
 
 ##########################################################
-header2 "Start Consul client agents"
+header2 "Start Consul on client VMs"
 
 for node in "${NODES_ARRAY[@]}"; do
   export NODE_NAME=${node}
+  header3 "Setup ${NODE_NAME} Consul client agent"
   log "Starting consul process on ${NODE_NAME}"
   remote_exec ${NODE_NAME} \
     "/usr/bin/consul agent \
@@ -151,7 +157,7 @@ done
 
 
 ##########################################################
-header2 "Change DNS for client agents"
+header2 "[Optional] Change DNS for client agents"
 ## [feat] [flow] Change DNS for client
 ## [ ] Check if it works on other Cloud providers
 ## [ ] Check if it works as expected
@@ -187,3 +193,8 @@ header2 "Change DNS for client agents"
 
 # EOF
 # )
+
+
+## Generate list of created files during scenario step
+## The list is appended to the $LOG_FILES_CREATED file
+get_created_files

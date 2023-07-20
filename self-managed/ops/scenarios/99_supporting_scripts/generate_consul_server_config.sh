@@ -5,14 +5,11 @@
 # ++-----------------+
 ## Prints a line on stdout prepended with date and time
 _log() {
-  echo -e "\033[1m["$(date +"%Y-%d-%d %H:%M:%S")"][`basename $0`] - ${@}\033[0m"
+  echo -e "\033[1m["$(date +"%Y-%d-%d %H:%M:%S")"] -- ${@}\033[0m"
 }
 
 _header() {
-  echo -e "\033[1m\033[32m["$(date +"%Y-%d-%d %H:%M:%S")"][`basename $0`] ${@}\033[0m"
-  # echo -e "\033[1m\033[32m #### - ${@}\033[0m"
-  # DEC_HEAD="\033[1m\033[32m[####] \033[0m\033[1m"
-  # _log "${DEC_HEAD}${@}"  
+  echo -e "\033[1m[$(date +'%Y-%d-%d %H:%M:%S')]\033[1m\033[33m [`basename $0`] - ${@}\033[0m"  
 }
 
 _log_err() {
@@ -28,6 +25,8 @@ _log_warn() {
 # ++-----------------+
 # || Parameters      |
 # ++-----------------+
+
+_header "Generate Consul servers configuration"
 
 ## [debug] Check variables
 _log_warn "CONSUL_DATACENTER = ${CONSUL_DATACENTER}"
@@ -63,8 +62,6 @@ PROMETHEUS_URI=${PROMETHEUS_URI:-`getent hosts mimir | awk '{print $1}'`}
 # ++-----------------+
 # || Begin           |
 # ++-----------------+
-
-_header "- Genearate Consul servers configuration"
 
 _log "Cleaning Scenario before apply."
 _log_warn "Removing pre-existing configuration in ${OUTPUT_FOLDER}"

@@ -3,14 +3,11 @@
 # ++-----------
 # ||   01 - Setup Bastion Host
 # ++------
+header1 "Prerequisites - Setup Bastion Host and Monitoring suite"
 
 # ++-----------------+
 # || Variables       |
 # ++-----------------+
-
-# Create necessary directories to operate
-mkdir -p "${ASSETS}"
-mkdir -p "${LOGS}"
 
 ## Instruqt compatibility
 ## [ ] [instruqt] check if this part is still needed
@@ -27,6 +24,22 @@ fi
 # ++-----------------+
 # || Begin           |
 # ++-----------------+
+
+## Create necessary directories to operate
+mkdir -p "${ASSETS}"
+mkdir -p "${LOGS}"
+
+LOG_FILES_CREATED="${LOGS}${LOG_FILES_CREATED_NAME}"
+LOG_PROVISION="${LOGS}${LOG_PROVISION_NAME}"
+
+# log_err $LOG_FILES_CREATED
+# log_err $LOG_PROVISION
+
+# exit 0
+
+## Create Logfiles
+echo -e "Scenario started at `date '+%Y-%m-%d %H:%M:%S'`\n" > ${LOG_FILES_CREATED}
+echo "Scenario started at `date '+%Y%m%d%H%M.%S'`" > ${LOG_PROVISION}
 
 ## Checks if the monitoring suite needs to be started with this scenario
 ## All the Getting Started scenarios on AWS and Azure will have this set 
@@ -75,3 +88,6 @@ EOT
   fi
 fi
 
+## Generate list of created files during scenario step
+## The list is appended to the $LOG_FILES_CREATED file
+get_created_files

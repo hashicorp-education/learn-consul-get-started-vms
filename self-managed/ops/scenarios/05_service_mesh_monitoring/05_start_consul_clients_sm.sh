@@ -93,7 +93,7 @@ for node in ${NODES_ARRAY[@]}; do
   fi
 done
 
-log_err "Consul Token: ${CONSUL_HTTP_TOKEN}"
+# log_err "Consul Token: ${CONSUL_HTTP_TOKEN}"
 
 
 ## Generate list of created files during scenario step

@@ -13,6 +13,7 @@ header1 "Deploy Consul on VMs"
 ## ----------------------------------------------------- ##
 
 
+## [ ] todo move parameters in 00_local_vars.env
 ## Supporting script configuration
 ## ----------------------------------------------------- ##
 ## Number of servers to spin up (3 or 5 recommended for production environment)
@@ -151,3 +152,7 @@ execute_supporting_script "generate_consul_server_tokens.sh"
 ## Generate list of created files during scenario step
 ## The list is appended to the $LOG_FILES_CREATED file
 get_created_files
+
+## Generate environment file for Consul
+## At this point the script resets the Consul environment file for the scwnario.
+print_env consul > ${ASSETS}/scenario/env-consul.env 

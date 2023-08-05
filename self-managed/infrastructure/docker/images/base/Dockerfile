@@ -98,6 +98,9 @@ COPY ./certs/id_rsa.pub /root/.ssh/authorized_keys
 COPY ./certs/id_rsa.pub /root/.ssh
 COPY ./certs/id_rsa /root/.ssh
 
+COPY ./ssh_config /home/admin/.ssh/config
+COPY ./ssh_config /root/.ssh/config
+
 RUN chown -R 1000:1000 /home/admin/.ssh
 RUN chown -R 1000:1000 /home/admin/certs
 

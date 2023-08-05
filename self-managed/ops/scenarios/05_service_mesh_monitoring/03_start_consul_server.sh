@@ -28,7 +28,7 @@ CONSUL_DATA_DIR="/opt/consul/"
 # export RETRY_JOIN="${CONSUL_RETRY_JOIN}"
 export CONSUL_RETRY_JOIN
 ## Putting all the generated files for this step into a 'control-plane' folder
-export STEP_ASSETS="${ASSETS}scenario/conf/"
+export STEP_ASSETS="${SCENARIO_OUTPUT_FOLDER}conf/"
 
 # ++-----------------+
 # || Begin           |
@@ -55,7 +55,16 @@ for i in `seq 0 "$((SERVER_NUMBER-1))"`; do
   ## [ux-diff] [cloud provider] UX differs across different Cloud providers
   if [ "${SCENARIO_CLOUD_PROVIDER}" == "docker" ]; then
 
-    log_debug "Environment is clean. Starting."
+    ## [mark] this thing is ugly. Debug and check paths
+    log_debug  "Remove pre-existing configuration and stopping pre-existing Consul instances"
+    remote_exec consul-server-$i "sudo rm -rf ${CONSUL_CONFIG_DIR}* && \
+                                  sudo mkdir -p ${CONSUL_CONFIG_DIR} && \
+                                  sudo chown 1000:1000 ${CONSUL_CONFIG_DIR} && \
+                                  sudo chmod g+w ${CONSUL_CONFIG_DIR} && \
+                                  sudo rm -rf ${CONSUL_DATA_DIR}* && \
+                                  sudo mkdir -p ${CONSUL_DATA_DIR} && \
+                                  sudo chown 1000:1000 ${CONSUL_DATA_DIR} && \
+                                  sudo chmod g+w ${CONSUL_DATA_DIR}" 
 
   elif [ "${SCENARIO_CLOUD_PROVIDER}" == "aws" ]; then
     ## [ ] [test] check if still works in AWS
@@ -70,16 +79,22 @@ for i in `seq 0 "$((SERVER_NUMBER-1))"`; do
                                   sudo mkdir -p ${CONSUL_DATA_DIR} && \
                                   sudo chown consul: ${CONSUL_DATA_DIR} && \
                                   sudo chmod g+w ${CONSUL_DATA_DIR}"
-  
-    _CONSUL_PID=`remote_exec consul-server-$i "pidof consul"`
-    
-    if [ ! -z ${_CONSUL_PID} ]; then
-      remote_exec consul-server-$i "sudo kill -9 ${_CONSUL_PID}"
-    fi
     
   else 
     log_err "Cloud provider $SCENARIO_CLOUD_PROVIDER is unsupported...exiting."
     exit 245
+  fi
+
+  log_debug "Stopping Consul process on consul-server-$i"
+  _CONSUL_PID=`remote_exec consul-server-$i "pidof consul"`
+    
+  if [ ! -z ${_CONSUL_PID} ]; then
+    log_debug "Found Consul process with PID: ${_CONSUL_PID}. Stopping it. "
+    COMMAND="sudo kill -9 ${_CONSUL_PID}"
+    # log_trace -t "[COMM]" "${COMMAND}" 
+    remote_exec consul-server-$i "$COMMAND"
+  else
+    log_trace "Consul process not running, nothing to clean."
   fi
 
   log "Copying Configuration on consul-server-$i"

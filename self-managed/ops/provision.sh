@@ -59,19 +59,25 @@ clean_env() {
 
 if [ -z "${BASTION_HOST}" ]; then
     ## If BASTION_HOST is not set it means we are running the script locally
-    # log "Bastion Host is not defined. The script is going to be executed on this node."
+    # log_debug "Bastion Host is not defined. The script is going to be executed on this node."
     ASSETS="../assets/"
 else 
-    # log "Bastion Host is ${BASTION_HOST}. The script is going to be executed remotely."
+    # log_debug "Bastion Host is ${BASTION_HOST}. The script is going to be executed remotely."
     ASSETS="../../assets/"
 fi
+
+
+## The assets folder should contain a scenario specific asset collection. This 
+## at the moment counts as default state detection (possibly not the only factor)
+## [warn] This could break flow in some cases. (Check inside/outside flows)
+export SCENARIO_OUTPUT_FOLDER="${ASSETS}scenario/"
 
 ## Refers to the scenario library where the script looks for scenario files and 
 ## for the
 SCENARIOS_FOLDER="./scenarios"
 
-
 # --- GLOBAL VARS AND FUNCTIONS ---
+# log_trace Importing functions from env files.
 ## Logging, OS checks, networking. Imported into provision.sh.
 source ${SCENARIOS_FOLDER}/00_shared_functions.env
 ## Scenario related functions. Depends on 00_*.env. Not imported into provision.sh
@@ -89,11 +95,6 @@ source ${SCENARIOS_FOLDER}/30_utility_functions.env
 ## If this file does not exist we should fallback to local execution and print a 
 ## warning because the resulting scripts might not work as-is.
 
-## The assets folder should contain a scenario specific asset collection. This 
-## at the moment counts as default state detection (possibly not the only factor)
-SCENARIO_OUTPUT_FOLDER="${ASSETS}scenario/"
-
-
 ########## ------------------------------------------------
 header0 "CONSUL SCENARIO DEPLOYMENT TOOL"
 ###### -----------------------------------------------
@@ -110,7 +111,11 @@ if [ -f "${SCENARIO_OUTPUT_FOLDER}scenario_env.env" ]; then
   ## @ASSETS_flow
   ## [warn] This operation overwrites the ASSETS variable
   ## This is intended only when BASTION_HOST is undefined.
+  log_debug Importing scenario environment variables.
   source ${SCENARIO_OUTPUT_FOLDER}scenario_env.env
+
+  export SCENARIO_OUTPUT_FOLDER="${ASSETS}scenario/"
+  log_trace "export SCENARIO_OUTPUT_FOLDER=${SCENARIO_OUTPUT_FOLDER}"
 
 else
   _NO_ENV="true"
@@ -152,12 +157,25 @@ else
 
     ## Automatically accept certificates of remote nodes and tries to connect 
     ## for 10 seconds.
-    ## todo: Make this on global variables since it should be used in any case
+    ## todo: Move this on global variables since it should be used in any case
     SSH_OPTS="-o StrictHostKeyChecking=accept-new -o ConnectTimeout=10"
 
     ## This is how to locate SSH certificate on the Bastion Host
     ## todo: Parametrize cloud provider (or move tf_home one level up)
-    SSH_CERT="../infrastructure/aws/certs/id_rsa.pem"
+    ## [ux-diff] [cloud provider] UX differs across different Cloud providers
+    if [ "${SCENARIO_CLOUD_PROVIDER}" == "docker" ]; then
+
+      SSH_CERT="../infrastructure/docker/images/base/certs/id_rsa"
+
+    elif [ "${SCENARIO_CLOUD_PROVIDER}" == "aws" ]; then
+    ## [ ] [test] check if still works in AWS
+    
+      SSH_CERT="../infrastructure/aws/certs/id_rsa.pem"
+
+    else 
+      log_err "Cloud provider $SCENARIO_CLOUD_PROVIDER is unsupported...exiting."
+      exit 245
+    fi
 
     ## @ASSETS_flow
     ## [warn]: This operation overwrites the ASSETS variable
@@ -167,6 +185,8 @@ else
     ## working paths to make the scenario generation work properly.
     WORKDIR="../../"
     ASSETS="${WORKDIR}assets/"
+    export SCENARIO_OUTPUT_FOLDER="${ASSETS}scenario/"
+    log_trace "export SCENARIO_OUTPUT_FOLDER=${SCENARIO_OUTPUT_FOLDER}"
   fi
 fi
 
@@ -188,7 +208,7 @@ if   [ "$1" == "clean" ]; then
   # a scenario (it would be nice to have idempotent scenarios apply)
 
   ## Removing previous run scripts
-  rm -rf ${ASSETS}scenario/scripts 
+  rm -rf ${SCENARIO_OUTPUT_FOLDER}scripts 
 
   exit 0
 elif [ "$1" == "infra" ]; then
@@ -201,7 +221,7 @@ elif [ "$1" == "infra" ]; then
   ## ## Uses functions defined at ${SCENARIOS}/20_infrasteructure_functions.env
   
   ## Removing previous run scripts
-  rm -rf ${ASSETS}scenario/scripts 
+  rm -rf ${SCENARIO_OUTPUT_FOLDER}scripts 
 
   exit 0
 elif [ "$1" == "operate" ]; then
@@ -211,7 +231,7 @@ elif [ "$1" == "operate" ]; then
   ###### -----------------------------------------------
   ## Generates scenario operate file and runs it on bastion host. 
   ## Scenario file is composed from the scenario folder and is going to be 
-  ## located at ${ASSETS}scenario/scripts/operate.sh
+  ## located at ${SCENARIO_OUTPUT_FOLDER}scripts/operate.sh
   ## Uses functions defined at ${SCENARIOS}/10_scenario_functions.env
 
   ## todo:  Clean existing environment
@@ -220,7 +240,7 @@ elif [ "$1" == "operate" ]; then
   ## same host with similar output.
  
   ## Removing previous run scripts
-  rm -rf ${ASSETS}scenario/scripts 
+  rm -rf ${SCENARIO_OUTPUT_FOLDER}scripts 
 
   ## Generate operate.sh script
   operate_dry "$2"
@@ -234,7 +254,7 @@ elif [ "$1" == "solve" ]; then
   ###### -----------------------------------------------
   ## [info] Generates scenario solution file and runs it on bastion host. 
   ## Scenario file is composed from the scenario folder and is going to be 
-  ## located at ${ASSETS}scenario/scripts/solve.sh
+  ## located at ${SCENARIO_OUTPUT_FOLDER}scripts/solve.sh
   ## Uses functions defined at ${SCENARIOS}/10_scenario_functions.env
 
   ## Generate solve.sh script
@@ -249,7 +269,7 @@ elif [ "$1" == "check" ]; then
   ###### -----------------------------------------------
   ##  [info] Generates scenario check file and runs it on bastion host. 
   ## Scenario file is composed from the scenario folder and is going to be 
-  ## located at ${ASSETS}scenario/scripts/check.sh
+  ## located at ${SCENARIO_OUTPUT_FOLDER}scripts/check.sh
   ## Uses functions defined at ${SCENARIOS}/10_scenario_functions.env
 
   ## Generate test.sh script
@@ -262,15 +282,22 @@ elif [ "$1" == "check" ]; then
 elif [ "$1" == "gs_check" ]; then
 
   base_scenarios_check
+  exit 0
 
 elif [ "$1" == "scenario_diff" ]; then
 
   scenarios_diff $2 $3
+  exit 0
 
 elif [ "$1" == "propagate" ]; then
 
-  propagate_scenario_file $2 $3
+  log_info "Propagate scenario $2"
+
+  LOG_LEVEL=0
+
+  propagate_scenario_up "$2" 
   exit 0
+
 elif [ "$1" == "test_logs" ]; then
 
   test_logs
@@ -280,6 +307,24 @@ elif [ "$1" == "list_scenarios" ]; then
   for i in `_print_available_scenarios | grep "available scenarios:" | grep -oP "\s[^:]*$"`; do
     echo "${i:0:2}  -  $i"
   done
+  exit 0
+elif [ "$1" == "generate_operate_files" ]; then
+  SCENARIO_OUTPUT_FOLDER="../infrastructure/instruqt/"
+
+  if [ -d "${SCENARIO_OUTPUT_FOLDER}" ]; then
+    if [ -f "${SCENARIO_OUTPUT_FOLDER}setup-bastion" ]; then
+      for j in `seq -f0%g 00 05`; do
+        operate_dry $j
+        if [ -f "${SCENARIO_OUTPUT_FOLDER}scripts/operate.sh" ]; then
+          cat "${SCENARIO_OUTPUT_FOLDER}setup-bastion" > ${SCENARIO_OUTPUT_FOLDER}setup-bastion-$j
+          cat "${SCENARIO_OUTPUT_FOLDER}scripts/operate.sh" >> ${SCENARIO_OUTPUT_FOLDER}setup-bastion-$j
+          echo "exit 0" >> ${SCENARIO_OUTPUT_FOLDER}setup-bastion-$j 
+          rm -f ${SCENARIO_OUTPUT_FOLDER}scripts/operate.sh 
+        fi
+      done
+    fi
+  fi
+
   exit 0
 fi
 

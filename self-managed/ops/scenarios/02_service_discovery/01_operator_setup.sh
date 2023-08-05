@@ -80,7 +80,7 @@ ${GRAFANA_URI} grafana
 EOT
 
     log "Starting monitoring suite on Bastion Host"
-    bash "${ASSETS}scenario/start_monitoring_suite.sh"
+    bash "${SCENARIO_OUTPUT_FOLDER}start_monitoring_suite.sh"
 
   else 
     log_err "Cloud provider $SCENARIO_CLOUD_PROVIDER is unsupported...exiting."

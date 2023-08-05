@@ -9,7 +9,7 @@ header1 "Securely connect your services with Consul service mesh"
 # || Variables       |
 # ++-----------------+
 
-export STEP_ASSETS="${ASSETS}scenario/conf/"
+export STEP_ASSETS="${SCENARIO_OUTPUT_FOLDER}conf/"
 
 export NODES_ARRAY=( "hashicups-db" "hashicups-api" "hashicups-frontend" "hashicups-nginx" )
 
@@ -93,7 +93,7 @@ for node in ${NODES_ARRAY[@]}; do
   fi
 done
 
-log_err "Consul Token: ${CONSUL_HTTP_TOKEN}"
+# log_err "Consul Token: ${CONSUL_HTTP_TOKEN}"
 
 
 ## Generate list of created files during scenario step

@@ -11,5 +11,7 @@ terraform.tfstate*
 
 *.DS_Store
 
+**/instruqt/
+
 # *.pem
 # acl-token-bootstrap.json

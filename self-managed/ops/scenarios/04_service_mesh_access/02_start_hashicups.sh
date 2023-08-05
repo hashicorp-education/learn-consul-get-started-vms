@@ -32,10 +32,10 @@ elif [ "${SCENARIO_CLOUD_PROVIDER}" == "aws" ]; then
     log "Deployment state cleaned"
 
     log "Installing new version."
-    remote_copy hashicups-db ${ASSETS}scenario/start_hashicups_db.sh ~/start_service.sh
-    remote_copy hashicups-api ${ASSETS}scenario/start_hashicups_api.sh ~/start_service.sh
-    remote_copy hashicups-frontend ${ASSETS}scenario/start_hashicups_fe.sh ~/start_service.sh
-    remote_copy hashicups-nginx ${ASSETS}scenario/start_hashicups_nginx.sh ~/start_service.sh
+    remote_copy hashicups-db        ${SCENARIO_OUTPUT_FOLDER}start_hashicups_db.sh ~/start_service.sh
+    remote_copy hashicups-api       ${SCENARIO_OUTPUT_FOLDER}start_hashicups_api.sh ~/start_service.sh
+    remote_copy hashicups-frontend  ${SCENARIO_OUTPUT_FOLDER}start_hashicups_fe.sh ~/start_service.sh
+    remote_copy hashicups-nginx     ${SCENARIO_OUTPUT_FOLDER}start_hashicups_nginx.sh ~/start_service.sh
     log "Deployment state cleaned"
 else 
     log_err "Cloud provider $SCENARIO_CLOUD_PROVIDER is unsupported...exiting."

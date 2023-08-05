@@ -22,7 +22,7 @@ CONSUL_DATA_DIR="/opt/consul/"
 # export RETRY_JOIN="${CONSUL_RETRY_JOIN}"
 export CONSUL_RETRY_JOIN
 ## Putting all the generated files for this step into a 'control-plane' folder
-export STEP_ASSETS="${ASSETS}scenario/conf/"
+export STEP_ASSETS="${SCENARIO_OUTPUT_FOLDER}conf/"
 
 # ++-----------------+
 # || Begin           |

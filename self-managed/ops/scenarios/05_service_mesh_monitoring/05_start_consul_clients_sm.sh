@@ -9,7 +9,7 @@ header1 "Securely connect your services with Consul service mesh"
 # || Variables       |
 # ++-----------------+
 
-export STEP_ASSETS="${ASSETS}scenario/conf/"
+export STEP_ASSETS="${SCENARIO_OUTPUT_FOLDER}conf/"
 
 export NODES_ARRAY=( "hashicups-db" "hashicups-api" "hashicups-frontend" "hashicups-nginx" )
 

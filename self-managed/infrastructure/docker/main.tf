@@ -39,7 +39,7 @@ resource "docker_container" "bastion_host" {
 
   ports {
     internal = "22"
-    external = "8022"
+    external = "2222"
   }
 
   labels {
@@ -52,7 +52,7 @@ resource "docker_container" "bastion_host" {
     user        = "admin"
     private_key = file("./images/base/certs/id_rsa")
     host        = "127.0.0.1"
-    port        = 8022
+    port        = 2222
   }
 
   provisioner "file" {

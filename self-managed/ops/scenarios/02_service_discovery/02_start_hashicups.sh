@@ -46,18 +46,22 @@ fi
 header2 "Starting HashiCups Application"
 
 header3 "Starting Database"
+remote_exec hashicups-db "chmod +x ~/start_service.sh" > /dev/null 2>&1
 remote_exec hashicups-db "bash ~/start_service.sh" > /dev/null 2>&1
 log "HashiCups Database Started"
 
 header3 "Starting API"
+remote_exec hashicups-api "chmod +x ~/start_service.sh" > /dev/null 2>&1
 remote_exec hashicups-api "bash ~/start_service.sh" > /dev/null 2>&1
 log "HashiCups API Started"
 
 header3 "Starting Frontend"
+remote_exec hashicups-frontend "chmod +x ~/start_service.sh" > /dev/null 2>&1
 remote_exec hashicups-frontend "bash ~/start_service.sh" > /dev/null 2>&1
 log "HashiCups Frontend Started"
 
 header3 "Starting Nginx"
+remote_exec hashicups-nginx "chmod +x ~/start_service.sh" > /dev/null 2>&1
 remote_exec hashicups-nginx "bash ~/start_service.sh" > /dev/null 2>&1
 log "HashiCups Nginx Started"
 

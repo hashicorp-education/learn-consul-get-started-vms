@@ -1,0 +1,93 @@
+# ++-----------------+
+# || Completion      |
+# ++-----------------+
+
+
+# enable programmable completion features (you don't need to enable
+# this, if it's already enabled in /etc/bash.bashrc and /etc/profile
+# sources /etc/bash.bashrc).
+if ! shopt -oq posix; then
+  if [ -f /usr/share/bash-completion/bash_completion ]; then
+    . /usr/share/bash-completion/bash_completion
+  elif [ -f /etc/bash_completion ]; then
+    . /etc/bash_completion
+  fi
+fi
+
+# ++-----------------+
+# || Aliases         |
+# ++-----------------+
+
+# ls aliases
+alias ll='ls -alF'
+alias la='ls -A'
+alias l='ls -CF'
+
+# enable color support of ls and also add handy aliases
+if [ -x /usr/bin/dircolors ]; then
+    test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
+    alias ls='ls --color=auto'
+
+    alias grep='grep --color=auto'
+    alias fgrep='fgrep --color=auto'
+    alias egrep='egrep --color=auto'
+fi
+
+# cd aliases
+alias cd..='cd ..'
+
+# ++-----------------+
+# || Functions       |
+# ++-----------------+
+
+# Finds last version of HasciCorp OSS tools available
+function hc_versions {
+#	set -x
+	which curl jq &>/dev/null || {
+    echo "Function requires curl and jq...install them to continue."
+		exit 1
+	}
+	
+	# Colors
+	local Col_Off="\033[0m"       # Text Reset
+	local BBlack="\033[1;30m"       # Black
+	local BRed="\033[1;31m"         # Red
+	local BGreen="\033[1;32m"       # Green
+	local BYellow="\033[1;33m"      # Yellow
+	local BBlue="\033[1;34m"        # Blue
+	local BPurple="\033[1;35m"      # Purple
+	local BCyan="\033[1;36m"        # Cyan
+	local BWhite="\033[1;37m"       # White
+
+	local CHECKPOINT_URL="https://checkpoint-api.hashicorp.com/v1/check"
+
+	echo ""
+
+	echo -e "${BRed}Consul:${Col_Off}			"$(curl -s "${CHECKPOINT_URL}"/consul | jq .current_version | tr -d '"')
+	echo -e "  ${BRed}consul_template:${Col_Off}	"$(curl -s https://releases.hashicorp.com/consul-template/index.json | jq -r '.versions | to_entries[] | .value.version' | sort --version-sort | tail -1)
+    echo -e "  ${BRed}consul_esm:${Col_Off}		"$(curl -s https://releases.hashicorp.com/consul-esm/index.json | jq -r '.versions | to_entries[] | .value.version' | sort --version-sort | tail -1)
+	echo -e "  ${BRed}envconsul:${Col_Off}		"$(curl -s https://releases.hashicorp.com/envconsul/index.json | jq -r '.versions | to_entries[] | .value.version' | sort --version-sort | tail -1)
+    echo -e "  ${BRed}cts:${Col_Off}		        "$(curl -s https://releases.hashicorp.com/consul-terraform-sync/index.json | jq -r '.versions | to_entries[] | .value.version' | sort --version-sort | tail -1)
+	echo -e "${BGreen}Nomad:${Col_Off}			"$(curl -s "${CHECKPOINT_URL}"/nomad | jq .current_version | tr -d '"')
+	echo -e "${BPurple}Terraform:${Col_Off}		"$(curl -s "${CHECKPOINT_URL}"/terraform | jq .current_version | tr -d '"')
+	echo -e "${BBlue}Vagrant:${Col_Off}		"$(curl -s "${CHECKPOINT_URL}"/vagrant | jq .current_version | tr -d '"')
+	echo -e "${BCyan}Packer:${Col_Off}			"$(curl -s "${CHECKPOINT_URL}"/packer | jq .current_version | tr -d '"')
+	echo -e "${BBlack}Vault:${Col_Off}			"$(curl -s https://releases.hashicorp.com/vault/index.json | jq -r '.versions | to_entries[] | .value.version' | sort --version-sort | tail -1)
+
+	echo ""
+}
+
+# search recursively under current directory for text file contents matching regex (case-insensitive)
+rgrep () {
+    grep -iInr --color=always --exclude-dir='.git' "$1" .
+}
+
+
+# ++-----------------+
+# || Prompt          |
+# ++-----------------+
+
+ExStat="\$?"
+
+export TERM=xterm
+export PS1="🔵 \[\033[1;97m\][\$?]\[\033[0m\]\[\033[1;36m\] \u@\h: \[\033[1;34m\]\w\[\033[0;35m\] \[\033[1;36m\]\$ \[\033[0m\]"

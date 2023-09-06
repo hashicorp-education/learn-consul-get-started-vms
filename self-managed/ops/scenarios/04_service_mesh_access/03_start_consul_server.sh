@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+# ++-----------
+# ||   03 - Start Consul servers
+# ++------
+header1 "Deploy Consul on VMs"
+
 # ++-----------------+
 # || Variables       |
 # ++-----------------+
@@ -8,6 +13,7 @@
 ## ----------------------------------------------------- ##
 
 
+## [ ] todo move parameters in 00_local_vars.env
 ## Supporting script configuration
 ## ----------------------------------------------------- ##
 ## Number of servers to spin up (3 or 5 recommended for production environment)
@@ -22,29 +28,50 @@ CONSUL_DATA_DIR="/opt/consul/"
 # export RETRY_JOIN="${CONSUL_RETRY_JOIN}"
 export CONSUL_RETRY_JOIN
 ## Putting all the generated files for this step into a 'control-plane' folder
-export STEP_ASSETS="${ASSETS}scenario/conf/"
+export STEP_ASSETS="${SCENARIO_OUTPUT_FOLDER}conf/"
 
 # ++-----------------+
 # || Begin           |
 # ++-----------------+
 
-header1 "Starting Consul server"
-
 ##########################################################
-header2 "Generate Consul servers configuration"
+header2 "Generate Consul server configuration"
 
-## MARK: [script] generate_consul_server_config.sh
+## This needs to be exported here to work inside the script.
+## [bug] [conf] Configuration generated does not work for different dc.domain
+export CONSUL_DOMAIN=${DOMAIN}
+export CONSUL_DATACENTER=${DATACENTER}
+export CONSUL_SERVER_NUMBER=${SERVER_NUMBER}
+
+## [cmd] [script] generate_consul_server_config.sh
+log -l WARN -t '[SCRIPT]' "Generate Consul server config"
 execute_supporting_script "generate_consul_server_config.sh"
 
 ##########################################################
-header2 "Copy Consul servers configuration files"
+header3 "Copy configuration on Consul server nodes"
 
-## ~todo make all servers discoverable from bastion host
 for i in `seq 0 "$((SERVER_NUMBER-1))"`; do
-  
-  ## -todo this thing is ugly. Debug and check paths
-  log "Remove pre-existing configuration and stopping pre-existing Consul instances"
-  remote_exec consul-server-$i "sudo rm -rf ${CONSUL_CONFIG_DIR}* && \
+
+  ## [ux-diff] [cloud provider] UX differs across different Cloud providers
+  if [ "${SCENARIO_CLOUD_PROVIDER}" == "docker" ]; then
+
+    ## [mark] this thing is ugly. Debug and check paths
+    log_debug  "Remove pre-existing configuration and stopping pre-existing Consul instances"
+    remote_exec consul-server-$i "sudo rm -rf ${CONSUL_CONFIG_DIR}* && \
+                                  sudo mkdir -p ${CONSUL_CONFIG_DIR} && \
+                                  sudo chown 1000:1000 ${CONSUL_CONFIG_DIR} && \
+                                  sudo chmod g+w ${CONSUL_CONFIG_DIR} && \
+                                  sudo rm -rf ${CONSUL_DATA_DIR}* && \
+                                  sudo mkdir -p ${CONSUL_DATA_DIR} && \
+                                  sudo chown 1000:1000 ${CONSUL_DATA_DIR} && \
+                                  sudo chmod g+w ${CONSUL_DATA_DIR}" 
+
+  elif [ "${SCENARIO_CLOUD_PROVIDER}" == "aws" ]; then
+    ## [ ] [test] check if still works in AWS
+
+    ## [mark] this thing is ugly. Debug and check paths
+    log_debug  "Remove pre-existing configuration and stopping pre-existing Consul instances"
+    remote_exec consul-server-$i "sudo rm -rf ${CONSUL_CONFIG_DIR}* && \
                                   sudo mkdir -p ${CONSUL_CONFIG_DIR} && \
                                   sudo chown consul: ${CONSUL_CONFIG_DIR} && \
                                   sudo chmod g+w ${CONSUL_CONFIG_DIR} && \
@@ -52,25 +79,42 @@ for i in `seq 0 "$((SERVER_NUMBER-1))"`; do
                                   sudo mkdir -p ${CONSUL_DATA_DIR} && \
                                   sudo chown consul: ${CONSUL_DATA_DIR} && \
                                   sudo chmod g+w ${CONSUL_DATA_DIR}"
-  
-  _CONSUL_PID=`remote_exec consul-server-$i "pidof consul"`
-  if [ ! -z ${_CONSUL_PID} ]; then
-    remote_exec consul-server-$i "sudo kill -9 ${_CONSUL_PID}"
+    
+  else 
+    log_err "Cloud provider $SCENARIO_CLOUD_PROVIDER is unsupported...exiting."
+    exit 245
   fi
-  
+
+  log_debug "Stopping Consul process on consul-server-$i"
+  _CONSUL_PID=`remote_exec consul-server-$i "pidof consul"`
+    
+  if [ ! -z ${_CONSUL_PID} ]; then
+    log_debug "Found Consul process with PID: ${_CONSUL_PID}. Stopping it. "
+    COMMAND="sudo kill -9 ${_CONSUL_PID}"
+    # log_trace -t "[COMM]" "${COMMAND}" 
+    remote_exec consul-server-$i "$COMMAND"
+  else
+    log_trace "Consul process not running, nothing to clean."
+  fi
+
   log "Copying Configuration on consul-server-$i"
+  
   remote_copy consul-server-$i "${STEP_ASSETS}consul-server-$i/*" "${CONSUL_CONFIG_DIR}" 
 
 done
 
 
 ##########################################################
-header2 "Start Consul"
+header2 "Start Consul server"
 
-## ~todo make all servers discoverable from bastion host
 for i in `seq 0 "$((SERVER_NUMBER-1))"`; do
   log "Start Consul process on consul-server-$i"
   
+  ## [ux-diff] [cloud provider] UX differs across different Cloud providers
+  if [ "${SCENARIO_CLOUD_PROVIDER}" == "docker" ]; then
+    wait_for consul-server-$i
+  fi
+
   remote_exec consul-server-$i \
     "/usr/bin/consul agent \
     -log-file=/tmp/consul-server-$i.${DATACENTER}.${DOMAIN} \
@@ -78,9 +122,8 @@ for i in `seq 0 "$((SERVER_NUMBER-1))"`; do
 
   sleep 1
 done
-
 ##########################################################
-header2 "Configure ACL"
+header2 "Configure Consul CLI to interact with Consul server"
 
 ## Consul CLI Configuration
 export CONSUL_HTTP_ADDR="https://consul-server-0:8443"
@@ -88,7 +131,7 @@ export CONSUL_HTTP_SSL=true
 export CONSUL_CACERT="${STEP_ASSETS}secrets/consul-agent-ca.pem"
 export CONSUL_TLS_SERVER_NAME="server.${DATACENTER}.${DOMAIN}"
 
-log "ACL Bootstrap"
+header2 "Bootstrap ACLs"
 
 for i in `seq 1 9`; do
 
@@ -109,39 +152,22 @@ for i in `seq 1 9`; do
   fi
 
 done
+  log "ACL system bootstrapped"
 
 ## Consul CLI Configuration
 export CONSUL_HTTP_TOKEN=`cat ${STEP_ASSETS}secrets/acl-token-bootstrap.json | jq -r ".SecretID"`
 
 ##########################################################
-header2 "Configure servers token"
+header2 "Create server tokens"
 
-## MARK: [script] generate_consul_server_tokens.sh
+## [cmd] [script] generate_consul_server_tokens.sh
+log -l WARN -t '[SCRIPT]' "Generate Consul server tokens"
 execute_supporting_script "generate_consul_server_tokens.sh"
 
-##########################################################
-header2 "Change Server VMs DNS"
+## Generate list of created files during scenario step
+## The list is appended to the $LOG_FILES_CREATED file
+get_created_files
 
-## -todo Change DNS
-for i in `seq 0 "$((SERVER_NUMBER-1))"`; do
-  log "Change DNS configuration on consul-server-$i"
-  
-  _consul_resolv=$(cat << EOF
-
-domain ${CONSUL_DOMAIN}
-search ${CONSUL_DOMAIN}
-nameserver 127.0.0.1
-
-EOF
-)
-
-  # remote_exec consul-server-$i \
-  #   "echo -n \"${_consul_resolv}\n\" | cat - /etc/resolv.conf | sudo tee /etc/resolv.conf"
-  
-  remote_exec consul-server-$i \
-    "sudo iptables --table nat --append OUTPUT --destination localhost --protocol udp --match udp --dport 53 --jump REDIRECT --to-ports 8600 && \
-     sudo iptables --table nat --append OUTPUT --destination localhost --protocol tcp --match tcp --dport 53 --jump REDIRECT --to-ports 8600" 
-
-done
-
-
+## Generate environment file for Consul
+## At this point the script resets the Consul environment file for the scwnario.
+print_env consul > ${ASSETS}/scenario/env-consul.env 

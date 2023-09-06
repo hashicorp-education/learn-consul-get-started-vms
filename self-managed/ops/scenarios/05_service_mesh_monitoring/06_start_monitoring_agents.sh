@@ -1,10 +1,15 @@
 #!/usr/bin/env bash
 
+# ++-----------
+# ||   06 - Start gafana-agent for Consul nodes
+# ++------
+header1 "Observe Consul service mesh traffic"
+
 # ++-----------------+
 # || Variables       |
 # ++-----------------+
 
-export STEP_ASSETS="${ASSETS}scenario/conf/"
+export STEP_ASSETS="${SCENARIO_OUTPUT_FOLDER}conf/"
 
 export NODES_ARRAY=( "hashicups-db" "hashicups-api" "hashicups-frontend" "hashicups-nginx" )
 
@@ -12,16 +17,14 @@ export NODES_ARRAY=( "hashicups-db" "hashicups-api" "hashicups-frontend" "hashic
 # || Begin           |
 # ++-----------------+
 
-header1 "Configuring Consul service mesh monitoring"
-
 mkdir -p ${STEP_ASSETS}monitoring
 
 header2 "Consul server monitoring"
 
-## ~todo make all servers discoverable from bastion host
+## todo make all servers discoverable from bastion host
 for i in `seq 0 "$((SERVER_NUMBER-1))"`; do
 
-  log "Generate Grafana Agent configuration for consul-server-$i "
+  log_debug "Generate Grafana Agent configuration for consul-server-$i "
   tee ${STEP_ASSETS}monitoring/consul-server-$i.yaml > /dev/null << EOF
 server:
   log_level: debug
@@ -43,7 +46,7 @@ logs:
   configs:
   - name: default
     clients:
-      - url: http://${PROMETHEUS_URI}:3100/loki/api/v1/push
+      - url: http://${LOKI_URI}:3100/loki/api/v1/push
     positions:
       filename: /tmp/positions.yaml
     scrape_configs:
@@ -57,14 +60,14 @@ logs:
            __path__: /tmp/*.log
 EOF
 
-  log "Stop pre-existing agent processes"
+  log_debug "Stop pre-existing agent processes"
   ## Stop already running Envoy processes (helps idempotency)
   _G_AGENT_PID=`remote_exec consul-server-$i "pidof grafana-agent"`
   if [ ! -z "${_G_AGENT_PID}" ]; then
     remote_exec consul-server-$i "sudo kill -9 ${_G_AGENT_PID}"
   fi
 
-  log "Copy configuration"
+  log_debug "Copy configuration"
   remote_copy consul-server-$i "${STEP_ASSETS}monitoring/consul-server-$i.yaml" "~/grafana-agent.yaml" 
 
   log "Start Grafana agent"
@@ -76,7 +79,10 @@ header2 "Consul client monitoring"
 
 for node in ${NODES_ARRAY[@]}; do
   NODE_NAME=${node}
-  log "Generate Grafana Agent configuration for ${NODE_NAME} "
+
+  header3 "Start monitoring for ${NODE_NAME}"
+
+  log_debug "Generate Grafana Agent configuration for ${NODE_NAME} "
 
   tee ${STEP_ASSETS}monitoring/${NODE_NAME}.yaml > /dev/null << EOF
 server:
@@ -103,7 +109,7 @@ logs:
   configs:
   - name: default
     clients:
-      - url: http://${PROMETHEUS_URI}:3100/loki/api/v1/push
+      - url: http://${LOKI_URI}:3100/loki/api/v1/push
     positions:
       filename: /tmp/positions.yaml
     scrape_configs:
@@ -117,17 +123,21 @@ logs:
            __path__: /tmp/*.log
 EOF
 
-  log "Stop pre-existing agent processes"
+  log_debug "Stop pre-existing agent processes"
   ## Stop already running Envoy processes (helps idempotency)
   _G_AGENT_PID=`remote_exec ${NODE_NAME} "pidof grafana-agent"`
   if [ ! -z "${_G_AGENT_PID}" ]; then
     remote_exec ${NODE_NAME} "sudo kill -9 ${_G_AGENT_PID}"
   fi
 
-  log "Copy configuration"
+  log_debug "Copy configuration"
   remote_copy ${NODE_NAME} "${STEP_ASSETS}monitoring/${NODE_NAME}.yaml" "~/grafana-agent.yaml" 
 
   log "Start Grafana agent"
   remote_exec ${NODE_NAME} "bash -c 'grafana-agent -config.file ~/grafana-agent.yaml > /tmp/grafana-agent.log 2>&1 &'"
 
 done
+
+## Generate list of created files during scenario step
+## The list is appended to the $LOG_FILES_CREATED file
+get_created_files

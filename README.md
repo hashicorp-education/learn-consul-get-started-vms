@@ -9,15 +9,15 @@ tutorials or as test environments.
 
 ### Available environments
 
-The environments are defined inside the `./infrastructure/aws/conf` 
+The environments are defined inside the `./self-managed/infrastructure/aws/conf` 
 folder:
 
 ```
-tree ./infrastructure/aws/conf
+tree ./self-managed/infrastructure/aws/conf
 ```
 
 ```
-./infrastructure/aws/conf
+./self-managed/infrastructure/aws/conf
 ├── 00_hashicups.tfvars
 ├── 01_consul.tfvars
 ├── 02_service_discovery.tfvars

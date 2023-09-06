@@ -5,14 +5,11 @@
 # ++-----------------+
 ## Prints a line on stdout prepended with date and time
 _log() {
-  echo -e "\033[1m["$(date +"%Y-%d-%d %H:%M:%S")"][`basename $0`] - ${@}\033[0m"
+  echo -e "\033[1m["$(date +"%Y-%d-%d %H:%M:%S")"] -- ${@}\033[0m"
 }
 
 _header() {
-  echo -e "\033[1m\033[32m["$(date +"%Y-%d-%d %H:%M:%S")"][`basename $0`] ${@}\033[0m"
-  # echo -e "\033[1m\033[32m #### - ${@}\033[0m"
-  # DEC_HEAD="\033[1m\033[32m[####] \033[0m\033[1m"
-  # _log "${DEC_HEAD}${@}"  
+  echo -e "\033[1m[$(date +'%Y-%d-%d %H:%M:%S')]\033[1m\033[33m [`basename $0`] - ${@}\033[0m"  
 }
 
 _log_err() {
@@ -28,6 +25,13 @@ _log_warn() {
 # ++-----------------+
 # || Parameters      |
 # ++-----------------+
+
+_header "Generate Consul servers configuration"
+
+## [debug] Check variables
+_log_warn "CONSUL_DATACENTER = ${CONSUL_DATACENTER}"
+_log_warn "CONSUL_DOMAIN = ${CONSUL_DOMAIN}"
+_log_warn "CONSUL_SERVER_NUMBER = ${CONSUL_SERVER_NUMBER}"
 
 ## Control plane variables
 CONSUL_DATACENTER=${CONSUL_DATACENTER:-"dc1"}
@@ -59,15 +63,13 @@ PROMETHEUS_URI=${PROMETHEUS_URI:-`getent hosts mimir | awk '{print $1}'`}
 # || Begin           |
 # ++-----------------+
 
-_header "- Genearate Consul servers configuration"
-
 _log "Cleaning Scenario before apply."
 _log_warn "Removing pre-existing configuration in ${OUTPUT_FOLDER}"
 rm -rf "${OUTPUT_FOLDER}secrets" && rm -rf "${OUTPUT_FOLDER}consul-server-*"
 
 _log "Generate scenario config folders."
 
-## ~todo [CHECK] check folder existence 
+## [ ] [CHECK] check folder existence 
 # _log_err "Output: ${OUTPUT_FOLDER}"
 
 mkdir -p "${OUTPUT_FOLDER}" && \
@@ -86,7 +88,7 @@ else
 fi
 
 # "Generate gossip encryption key config"
-## MARK: [conf] agent-gossip-encryption.hcl
+## [file] [conf] agent-gossip-encryption.hcl
 echo "encrypt = \"${CONSUL_GOSSIP_KEY}\"" > ./agent-gossip-encryption.hcl
 
 _log "Generate CA"
@@ -122,7 +124,7 @@ for i in `seq 0 "$((CONSUL_SERVER_NUMBER-1))"`; do
   pushd "${OUTPUT_FOLDER}consul-server-$i/"  > /dev/null 2>&1
 
   # "Generate consul.hcl - requirement for systemd service"
-  ## MARK: [conf] consul.hcl
+  ## [file] [conf] consul.hcl
   tee ./consul.hcl > /dev/null << EOF
 # -----------------------------+
 # consul.hcl                   |
@@ -136,7 +138,7 @@ data_dir = "${CONSUL_DATA_DIR}"
 
 # Logging
 log_level = "${CONSUL_LOG_LEVEL}"
-enable_syslog = true
+enable_syslog = false
 
 ## Disable script checks
 enable_script_checks = false
@@ -147,7 +149,7 @@ enable_local_script_checks = true
 EOF
 
   # "Generate server specific configuration"
-  ## MARK: [conf] agent-server-specific.hcl
+  ## [file] [conf] agent-server-specific.hcl
   tee ./agent-server-specific.hcl > /dev/null << EOF
 # -----------------------------+
 # agent-server-specific.hcl    |
@@ -163,7 +165,7 @@ bootstrap_expect = ${CONSUL_SERVER_NUMBER}
 EOF
 
   # "Generate server specific UI configuration"
-  ## MARK: [conf] agent-server-specific-ui.hcl
+  ## [file] [conf] agent-server-specific-ui.hcl
   tee ./agent-server-specific-ui.hcl > /dev/null << EOF
 
 # -----------------------------+
@@ -187,7 +189,7 @@ ui_config {
 }
 EOF
 
-  ## MARK: [conf] agent-server-networking.hcl
+  ## [file] [conf] agent-server-networking.hcl
   tee ./agent-server-networking.hcl > /dev/null << EOF
 # -----------------------------+
 # agent-server-networking.hcl  |
@@ -231,7 +233,7 @@ recursors = ["${CONSUL_DNS_RECURSOR}"]
 EOF
 
   # "Generate TLS configuration"
-  ## MARK: [conf] agent-server-tls.hcl
+  ## [file] [conf] agent-server-tls.hcl
   tee ./agent-server-tls.hcl > /dev/null << EOF
 # -----------------------------+
 # agent-server-tls.hcl         |
@@ -289,7 +291,7 @@ auto_encrypt {
 EOF
 
 # "Generate ACL configuration"
-## MARK: [conf] agent-server-tls.hcl
+## [file] [conf] agent-server-tls.hcl
 tee ./agent-server-acl.hcl > /dev/null << EOF
 # -----------------------------+
 # agent-server-acl.hcl         |
@@ -307,7 +309,7 @@ acl = {
 EOF
 
 # "Generating Consul agent server telemetry config"
-## MARK: [conf] agent-server-telemetry.hcl
+## [file] [conf] agent-server-telemetry.hcl
 tee ./agent-server-telemetry.hcl > /dev/null << EOF
 # -----------------------------+
 # agent-server-telemetry.hcl   |

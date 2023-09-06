@@ -1,10 +1,15 @@
 #!/usr/bin/env bash
 
+# ++-----------
+# ||   04 - Start Consul clients (Service Discovery)
+# ++------
+header1 "Register your services to Consul"
+
 # ++-----------------+
 # || Variables       |
 # ++-----------------+
 
-export STEP_ASSETS="${ASSETS}scenario/conf/"
+export STEP_ASSETS="${SCENARIO_OUTPUT_FOLDER}conf/"
 
 export NODES_ARRAY=( "hashicups-db" "hashicups-api" "hashicups-frontend" "hashicups-nginx" )
 
@@ -12,27 +17,24 @@ export NODES_ARRAY=( "hashicups-db" "hashicups-api" "hashicups-frontend" "hashic
 # || Begin           |
 # ++-----------------+
 
-header1 "Starting Consul client agents"
-
-# log "Cleaning previous configfuration assets generated"
-# for node in ${NODES_ARRAY[@]}; do
-#   rm -rf ${STEP_ASSETS}${node}
-# done
+# header2 Prerequisites
+# log "Checking prerequisites"
+# header3 "Configure Consul CLI"
+# log_debug "Retrieving configuration from ${ASSETS}/scenario/env-consul.env"
 
 ##########################################################
 header2 "Generate Consul clients configuration"
 
-for node in ${NODES_ARRAY[@]}; do
+for node in "${NODES_ARRAY[@]}"; do
   export NODE_NAME=${node}
   # export CONSUL_RETRY_JOIN
-  header3 "Generate Consul client configuration for ${NODE_NAME}"
+  header3 "Generate configuration for ${NODE_NAME} agent"
 
-  ## MARK: [script] generate_consul_client_config.sh
-  log "[EXTERNAL SCRIPT] - Generate Consul config"  
+  ## [cmd] [script] generate_consul_client_config.sh
+  log -l WARN -t '[SCRIPT]' "Generate Consul config"  
   execute_supporting_script "generate_consul_client_config.sh"
 
-
-  log "Generate client tokens"
+  log_debug "Generate client ACL tokens"
 
   tee ${STEP_ASSETS}acl-policy-${NODE_NAME}.hcl > /dev/null << EOF
 # Allow the service and its sidecar proxy to register into the catalog.
@@ -80,7 +82,8 @@ EOF
   DNS_TOK=`cat ${STEP_ASSETS}secrets/acl-token-dns.json | jq -r ".SecretID"`
   AGENT_TOKEN=`cat ${STEP_ASSETS}secrets/acl-token-${NODE_NAME}.json | jq -r ".SecretID"` 
 
-  ## !todo: figure before fly - testing with management token
+  ## [crit] figure before fly - testing with management token
+  ## [debug] Test if still true
   # DNS_TOK=${CONSUL_HTTP_TOKEN}
   # AGENT_TOKEN=${CONSUL_HTTP_TOKEN}
 
@@ -95,14 +98,14 @@ acl {
 EOF
 
   ## Adding the token to the service definition files for anti-entropy
-  ## !todo [CHECK BEHAVIOR]: Why is config_file_service_registration not enforced?
+  ## [warn] [CHECK BEHAVIOR]: Why is config_file_service_registration not enforced?
   ## Is it safe enough to set default = agent ? After all the client is not 
   ## exposing anything sensitive.
   export _agent_token=${AGENT_TOKEN}
 
-  ## MARK: [script] generate_consul_service_config.sh
-  ## -todo move service definition map outside
-  log "[EXTERNAL SCRIPT] - Generate services config"
+  ## [cmd] [script] generate_consul_service_config.sh
+  ## [ ] move service definition map outside
+  log -l WARN -t '[SCRIPT]' "Generate Consul service config"
   execute_supporting_script "generate_consul_service_config.sh"
 
   unset _agent_token
@@ -111,7 +114,7 @@ EOF
   ## into Consul configuration
   cp ${STEP_ASSETS}${NODE_NAME}/svc/service_discovery/*.hcl "${STEP_ASSETS}${NODE_NAME}"
 
-  log "Clean remote node"
+  log_debug "Clean remote node"
   
   remote_exec ${NODE_NAME} "sudo rm -rf ${CONSUL_CONFIG_DIR}* && \
                             sudo rm -rf ${CONSUL_DATA_DIR}* && \
@@ -129,15 +132,16 @@ EOF
     remote_exec ${NODE_NAME} "sudo kill -9 ${_ENVOY_PID}"
   fi
 
-  log "Copy configuration on client nodes"
+  log_debug "Copy configuration on client nodes"
   remote_copy ${NODE_NAME} "${STEP_ASSETS}${NODE_NAME}/*" "${CONSUL_CONFIG_DIR}" 
 done
 
 ##########################################################
-header2 "Start Consul client agents"
+header2 "Start Consul on client VMs"
 
-for node in ${NODES_ARRAY[@]}; do
+for node in "${NODES_ARRAY[@]}"; do
   export NODE_NAME=${node}
+  header3 "Setup ${NODE_NAME} Consul client agent"
   log "Starting consul process on ${NODE_NAME}"
   remote_exec ${NODE_NAME} \
     "/usr/bin/consul agent \
@@ -148,30 +152,46 @@ for node in ${NODES_ARRAY[@]}; do
 
 done
 
+
 ##########################################################
-header2 "Change DNS for client agents"
+header2 "[Optional] Change DNS for client agents"
+## [feat] [flow] Change DNS for client
+## [ ] Check if it works on other Cloud providers
+## [ ] Check if it works as expected
 
-## -todo Change DNS
-for node in ${NODES_ARRAY[@]}; do
-  export NODE_NAME=${node}
-  log "Change DNS configuration on ${NODE_NAME}"
+ ## [ux-diff] [cloud provider] UX differs across different Cloud providers
+  if [ "${SCENARIO_CLOUD_PROVIDER}" == "docker" ]; then
 
-  _consul_resolv=$(cat << EOF
+    log_warn "Change DNS for Docker is not yer supported. Use Docker DNS."
 
-domain ${CONSUL_DOMAIN}
-search ${CONSUL_DOMAIN}
-nameserver 127.0.0.1
+  elif [ "${SCENARIO_CLOUD_PROVIDER}" == "aws" ]; then
+    ## [ ] [test] check if still works in AWS
 
-EOF
-)
+    for node in ${NODES_ARRAY[@]}; do
+      export NODE_NAME=${node}
+      log "Change DNS configuration on ${NODE_NAME}"
 
-  # remote_exec ${NODE_NAME} \
-  #   "echo -n \"${_consul_resolv}\" | cat - /etc/resolv.conf | sudo tee /etc/resolv.conf"
-  
-  remote_exec ${NODE_NAME} \
-    "sudo iptables --table nat --append OUTPUT --destination localhost --protocol udp --match udp --dport 53 --jump REDIRECT --to-ports 8600 && \
-     sudo iptables --table nat --append OUTPUT --destination localhost --protocol tcp --match tcp --dport 53 --jump REDIRECT --to-ports 8600" 
+      remote_exec ${NODE_NAME} \
+        "sudo iptables --table nat --append OUTPUT --destination localhost --protocol udp --match udp --dport 53 --jump REDIRECT --to-ports 8600 && \
+        sudo iptables --table nat --append OUTPUT --destination localhost --protocol tcp --match tcp --dport 53 --jump REDIRECT --to-ports 8600" 
 
-  # sleep 1
-done
+    done
+    
+  else 
+    log_err "Cloud provider $SCENARIO_CLOUD_PROVIDER is unsupported...exiting."
+    exit 245
+  fi
 
+# _consul_resolv=$(cat << EOF
+
+# domain ${CONSUL_DOMAIN}
+# search ${CONSUL_DOMAIN}
+# nameserver 127.0.0.1
+
+# EOF
+# )
+
+
+## Generate list of created files during scenario step
+## The list is appended to the $LOG_FILES_CREATED file
+get_created_files

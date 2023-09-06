@@ -4,7 +4,7 @@
 # || Functions       |
 # ++-----------------+
 
-## todo: clean_env() 
+## [feat] clean_env() a function to clean environment config
 ## Cleans entire environment. Removes Infrastructure.
 clean_env() {
 
@@ -39,50 +39,67 @@ clean_env() {
 
 ## Scenario Library
 
-## MARK: FLOW CRITICAL POINT !!! - Scenario PATHS configuration
+## [core] FLOW CRITICAL POINT !!! - Scenario PATHS configuration
+## The ASSETS variable is overwritten several times during execution
+## todo: Find a more elegant way to get out of this bottleneck.
 
-## Refers to a workbench folder used by the script itself.
-## In this folder all the dynamic files created explicitly for this scenario are 
-## kept.
-## This might end up being replaced by the scenario variable when the scenario 
-## is present not sure we want this.
-ASSETS="../assets/"
+## This ends up being replaced by the scenario variable when the scenario 
+## file `scenario_env.env` is present.
+## The new values is: `ASSETS="../assets/"`
+## This is intended (and necessary) when running the `provision.sh` directly on
+## the Bastion Host but it breaks the flow when running the `provision.sh`
+## locally and then trying to copy the generated files on the remote bastion host. 
+
+## Using @ASSETS_flow tag to indicate points in the code where the variable is 
+## overwritten.
+
+## Refers to the workbench folder used by the script itself.
+## In this folder are kept all the dynamic files created explicitly for this 
+## scenario.
+
+if [ -z "${BASTION_HOST}" ]; then
+    ## If BASTION_HOST is not set it means we are running the script locally
+    # log_debug "Bastion Host is not defined. The script is going to be executed on this node."
+    ASSETS="../assets/"
+else 
+    # log_debug "Bastion Host is ${BASTION_HOST}. The script is going to be executed remotely."
+    ASSETS="../../assets/"
+fi
+
+
+## The assets folder should contain a scenario specific asset collection. This 
+## at the moment counts as default state detection (possibly not the only factor)
+## [warn] This could break flow in some cases. (Check inside/outside flows)
+export SCENARIO_OUTPUT_FOLDER="${ASSETS}scenario/"
 
 ## Refers to the scenario library where the script looks for scenario files and 
 ## for the
 SCENARIOS_FOLDER="./scenarios"
 
-
 # --- GLOBAL VARS AND FUNCTIONS ---
-## Logging, OS checks, networking ()
-source scenarios/00_shared_functions.env
+# log_trace Importing functions from env files.
+## Logging, OS checks, networking. Imported into provision.sh.
+source ${SCENARIOS_FOLDER}/00_shared_functions.env
 ## Scenario related functions. Depends on 00_*.env. Not imported into provision.sh
-source scenarios/10_scenario_functions.env
+source ${SCENARIOS_FOLDER}/10_scenario_functions.env
 ## Infrastructure related functions. Depends on 00_*.env. Not imported into provision.sh
-source scenarios/20_infrastructure_functions.env
-
+source ${SCENARIOS_FOLDER}/20_infrastructure_functions.env
+## Random functions. Mostly scenarios files and folders tools
+source ${SCENARIOS_FOLDER}/30_utility_functions.env
 
 ## Scenario specific environment. Generated dynamically.
 ## UNCHARTED: Currently the tool supports only single scenario running.
 ##              Only single scenario use cases are tested at this time of 
 ##              development. 
-##  ~todo: Check PATHS for existence
 ## If scenario file does not exist the final script might not work.
 ## If this file does not exist we should fallback to local execution and print a 
 ## warning because the resulting scripts might not work as-is.
 
-## The assets folder should contain a scenario specific asset collection. This 
-## at the moment counts as default state detection (possibly not the only factor)
-SCENARIO_OUTPUT_FOLDER="${ASSETS}scenario/"
+########## ------------------------------------------------
+header0 "CONSUL SCENARIO DEPLOYMENT TOOL"
+###### -----------------------------------------------
 
-# ## -todo Flow control...remove before fly
-# ## Artificially generate a scenario file (check dry_run=false option)
-# touch ${SCENARIO_OUTPUT_FOLDER}scenario_env.env
-# ## Artificially populate a BASTION_HOST variable (check _RUN_LOCAL=false)
-# BASTION_HOST="Bastion Host"
-
-## Scenario state detection
-# [[ -f "$1" ]] && source "$1"
+header2 "Testing environment variables for scenario"
 
 ## Infrastructure creation creates a "state file", named `scenario_env.env` with 
 ## variables required to locate and connect to the remote scenario. If the state 
@@ -91,7 +108,14 @@ SCENARIO_OUTPUT_FOLDER="${ASSETS}scenario/"
 ## dry_run version of the function (produce output but don't apply scripts).
 if [ -f "${SCENARIO_OUTPUT_FOLDER}scenario_env.env" ]; then
 
-  source ../assets/scenario/scenario_env.env  
+  ## @ASSETS_flow
+  ## [warn] This operation overwrites the ASSETS variable
+  ## This is intended only when BASTION_HOST is undefined.
+  log_debug Importing scenario environment variables.
+  source ${SCENARIO_OUTPUT_FOLDER}scenario_env.env
+
+  export SCENARIO_OUTPUT_FOLDER="${ASSETS}scenario/"
+  log_trace "export SCENARIO_OUTPUT_FOLDER=${SCENARIO_OUTPUT_FOLDER}"
 
 else
   _NO_ENV="true"
@@ -101,6 +125,7 @@ if [ "${_NO_ENV}" == "true" ]; then
 
   ## If there is no environment definition the scenario files might be faulty
   ## Therefore it is better to not run them but just generate them for checks.
+  log_warn "No environment definition file found at ${SCENARIO_OUTPUT_FOLDER}scenario_env.env"
   _DRY_RUN="true"
 
 else
@@ -123,38 +148,51 @@ else
     ## In this case we also SSH based options to permit SSH connection to the
     ## Bastion Host.
 
-    ## MARK: FLOW CRITICAL POINT !!! if this breaks connections will not work.
-    ## This overrides the SSH_OPTS and SSH_CERT the were loaded from
-    ## ../assets/scenario/scenario_env.env for the provision.sh workflow. 
+    ## [core] FLOW CRITICAL POINT !!! if this breaks, connections will not work.
+    ## This overrides the SSH_OPTS and SSH_CERT that were loaded from
+    ## ${ASSETS}/scenario/scenario_env.env for the provision.sh workflow. 
     ## This only affects the certificate used to connect to the Bastion Host. 
     ## The SSH_CERT defined in ../assets/scenario/scenario_env.env will still be
     ## used when running the operate.sh script on BASTION_HOST.
 
     ## Automatically accept certificates of remote nodes and tries to connect 
     ## for 10 seconds.
-    ## todo Make this on global variables since it should be used in any case
+    ## todo: Move this on global variables since it should be used in any case
     SSH_OPTS="-o StrictHostKeyChecking=accept-new -o ConnectTimeout=10"
 
     ## This is how to locate SSH certificate on the Bastion Host
-    ## ~todo Parametrize cloud provider (or move tf_home one level up)
-    SSH_CERT="../infrastructure/aws/certs/id_rsa.pem"
+    ## todo: Parametrize cloud provider (or move tf_home one level up)
+    ## [ux-diff] [cloud provider] UX differs across different Cloud providers
+    if [ "${SCENARIO_CLOUD_PROVIDER}" == "docker" ]; then
+
+      SSH_CERT="../infrastructure/docker/images/base/certs/id_rsa"
+
+    elif [ "${SCENARIO_CLOUD_PROVIDER}" == "aws" ]; then
+    ## [ ] [test] check if still works in AWS
+    
+      SSH_CERT="../infrastructure/aws/certs/id_rsa.pem"
+
+    else 
+      log_err "Cloud provider $SCENARIO_CLOUD_PROVIDER is unsupported...exiting."
+      exit 245
+    fi
+
+    ## @ASSETS_flow
+    ## [warn]: This operation overwrites the ASSETS variable
+    ## This is intended only when BASTION_HOST is defined.
 
     ## If running the script from a remote machine we need to redefine the 
-    ## working paths to make the scenario genration work properly.
-    WORKDIR="../"
+    ## working paths to make the scenario generation work properly.
+    WORKDIR="../../"
     ASSETS="${WORKDIR}assets/"
-
+    export SCENARIO_OUTPUT_FOLDER="${ASSETS}scenario/"
+    log_trace "export SCENARIO_OUTPUT_FOLDER=${SCENARIO_OUTPUT_FOLDER}"
   fi
-
-
 fi
 
 # --------------------
 # --- ENVIRONMENT ----
 # --------------------
-
-## Removing previous run scripts
-rm -rf ${ASSETS}scenario/scripts 
 
 ## Comma separates string of prerequisites
 PREREQUISITES="docker,wget,jq,grep,sed,tail,awk"
@@ -168,48 +206,132 @@ PREREQUISITES="docker,wget,jq,grep,sed,tail,awk"
 if   [ "$1" == "clean" ]; then
   #  todo Clean environment. This should be executed before applying
   # a scenario (it would be nice to have idempotent scenarios apply)
+
+  ## Removing previous run scripts
+  rm -rf ${SCENARIO_OUTPUT_FOLDER}scripts 
+
   exit 0
-elif [ "$1" == "operate" ]; then
-  ########## ------------------------------------------------
-  header1     "OPERATE SCENARIO"
-  ###### -----------------------------------------------
-  ## Generates scenario operate file and runs it on bastion host. 
-  ## Scenario file is composed from the scenario folder and is going to be 
-  ## located at ${ASSETS}scenario/scripts/operate.sh
-  ## Uses functions defined at ${SCENARIOS}/10_scenario_functions.env
-
-  ## 0 Clean existing environment
-  ## todo check here for sw_clean or hw_clean
-  ## For now the scenario should be safe enough to be ran multiple times on the 
-  ## same host with similar output.
- 
-  ## Generate operate.sh script
-  operate_dry $2
-  ## Execute operate.sh script
-  execute_scenario_step "operate"
-
 elif [ "$1" == "infra" ]; then
+  ########## ------------------------------------------------
+  header2     "DEPLOY SCENARIO INFRASTRUCTURE"
+  ###### -----------------------------------------------
+  ## [feat] Deploy infrastructure directly from the script
   ##  todo Spins up infrastructure for scenario. 
   ## Infrastructure files are located at ../infrastructure.
   ## ## Uses functions defined at ${SCENARIOS}/20_infrasteructure_functions.env
+  
+  ## Removing previous run scripts
+  rm -rf ${SCENARIO_OUTPUT_FOLDER}scripts 
+
+  exit 0
+elif [ "$1" == "operate" ]; then
+  ########## ------------------------------------------------
+  header2     "OPERATE SCENARIO"
+  log "Operating scenario $2"
+  ###### -----------------------------------------------
+  ## Generates scenario operate file and runs it on bastion host. 
+  ## Scenario file is composed from the scenario folder and is going to be 
+  ## located at ${SCENARIO_OUTPUT_FOLDER}scripts/operate.sh
+  ## Uses functions defined at ${SCENARIOS}/10_scenario_functions.env
+
+  ## todo:  Clean existing environment
+  ## todo:  check here for sw_clean or hw_clean
+  ## For now the scenario should be safe enough to be ran multiple times on the 
+  ## same host with similar output.
+ 
+  ## Removing previous run scripts
+  rm -rf ${SCENARIO_OUTPUT_FOLDER}scripts 
+
+  ## Generate operate.sh script
+  operate_dry "$2"
+  ## Execute operate.sh script
+  execute_scenario_step "operate"
+
+elif [ "$1" == "solve" ]; then
+  ########## ------------------------------------------------
+  header2     "SOLVE SCENARIO"
+  log "Solving scenario $2"
+  ###### -----------------------------------------------
+  ## [info] Generates scenario solution file and runs it on bastion host. 
+  ## Scenario file is composed from the scenario folder and is going to be 
+  ## located at ${SCENARIO_OUTPUT_FOLDER}scripts/solve.sh
+  ## Uses functions defined at ${SCENARIOS}/10_scenario_functions.env
+
+  ## Generate solve.sh script
+  solve_dry "$2"
+
+  execute_scenario_step "solve"
+
   exit 0
 elif [ "$1" == "check" ]; then
-  ##  todo Generates scenario check file and runs it on bastion host. 
+  ########## ------------------------------------------------
+  header2     "CHECK SCENARIO"
+  ###### -----------------------------------------------
+  ##  [info] Generates scenario check file and runs it on bastion host. 
   ## Scenario file is composed from the scenario folder and is going to be 
-  ## located at ${ASSETS}scenario/scripts/check.sh
+  ## located at ${SCENARIO_OUTPUT_FOLDER}scripts/check.sh
   ## Uses functions defined at ${SCENARIOS}/10_scenario_functions.env
+
+  ## Generate test.sh script
+  test_dry "$2"
+
+  execute_scenario_step "test"
+
   exit 0
-elif [ "$1" == "solve" ]; then
-  ## todo Generates scenario solution file and runs it on bastion host. 
-  ## Scenario file is composed from the scenario folder and is going to be 
-  ## located at ${ASSETS}scenario/scripts/solve.sh
-  ## Uses functions defined at ${SCENARIOS}/10_scenario_functions.env
+
+elif [ "$1" == "gs_check" ]; then
+
+  base_scenarios_check
+  exit 0
+
+elif [ "$1" == "scenario_diff" ]; then
+
+  scenarios_diff $2 $3
+  exit 0
+
+elif [ "$1" == "propagate" ]; then
+
+  log_info "Propagate scenario $2"
+
+  LOG_LEVEL=0
+
+  propagate_scenario_up "$2" 
+  exit 0
+
+elif [ "$1" == "test_logs" ]; then
+
+  test_logs
+  exit 0
+elif [ "$1" == "list_scenarios" ]; then
+  header2 List Avaiable Scenarios
+  for i in `_print_available_scenarios | grep "available scenarios:" | grep -oP "\s[^:]*$"`; do
+    echo "${i:0:2}  -  $i"
+  done
+  exit 0
+elif [ "$1" == "generate_operate_files" ]; then
+  SCENARIO_OUTPUT_FOLDER="../infrastructure/instruqt/"
+
+  if [ -d "${SCENARIO_OUTPUT_FOLDER}" ]; then
+    if [ -f "${SCENARIO_OUTPUT_FOLDER}setup-bastion" ]; then
+      for j in `seq -f0%g 00 05`; do
+        operate_dry $j
+        if [ -f "${SCENARIO_OUTPUT_FOLDER}scripts/operate.sh" ]; then
+          cat "${SCENARIO_OUTPUT_FOLDER}setup-bastion" > ${SCENARIO_OUTPUT_FOLDER}setup-bastion-$j
+          cat "${SCENARIO_OUTPUT_FOLDER}scripts/operate.sh" >> ${SCENARIO_OUTPUT_FOLDER}setup-bastion-$j
+          echo "exit 0" >> ${SCENARIO_OUTPUT_FOLDER}setup-bastion-$j 
+          rm -f ${SCENARIO_OUTPUT_FOLDER}scripts/operate.sh 
+        fi
+      done
+    fi
+  fi
+
   exit 0
 fi
 
+
 ## Clean environment
-log "Cleaning Environment"
-clean_env
+# log "Cleaning Environment"
+# clean_env
 
 ########## ------------------------------------------------
 header1     "PROVISIONING PREREQUISITES"

@@ -11,7 +11,9 @@ resource "local_file" "scenario_env" {
     consul_datacenter = var.consul_datacenter,
     consul_domain = var.consul_domain,
     server_number = var.server_number,
-    retry_join = local.retry_join
+    retry_join = local.retry_join,
+    cloud_provider="aws",
+    log_level=var.log_level
   })
   filename = "${path.module}/../../../assets/scenario/scenario_env.env"
 }

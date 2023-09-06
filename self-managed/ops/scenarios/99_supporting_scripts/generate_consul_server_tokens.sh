@@ -5,14 +5,11 @@
 # ++-----------------+
 ## Prints a line on stdout prepended with date and time
 _log() {
-  echo -e "\033[1m["$(date +"%Y-%d-%d %H:%M:%S")"][`basename $0`] - ${@}\033[0m"
+  echo -e "\033[1m["$(date +"%Y-%d-%d %H:%M:%S")"] -- ${@}\033[0m"
 }
 
 _header() {
-  echo -e "\033[1m\033[32m["$(date +"%Y-%d-%d %H:%M:%S")"][`basename $0`] ${@}\033[0m"
-  # echo -e "\033[1m\033[32m #### - ${@}\033[0m"
-  # DEC_HEAD="\033[1m\033[32m[####] \033[0m\033[1m"
-  # _log "${DEC_HEAD}${@}"  
+  echo -e "\033[1m[$(date +'%Y-%d-%d %H:%M:%S')]\033[1m\033[33m [`basename $0`] - ${@}\033[0m"  
 }
 
 _log_err() {
@@ -89,7 +86,7 @@ EOF
 
 _log "Setting environment variables to communicate with Consul"
 
-## ~todo: Make CONSUL_HTTP_ADDR mandatory from outside 
+## [ ] Make CONSUL_HTTP_ADDR mandatory from outside 
 export CONSUL_HTTP_ADDR="https://consul-server-0${FQDN_SUFFIX}:${CONSUL_HTTPS_PORT}"
 export CONSUL_HTTP_SSL=true
 export CONSUL_CACERT="${OUTPUT_FOLDER}secrets/consul-agent-ca.pem"

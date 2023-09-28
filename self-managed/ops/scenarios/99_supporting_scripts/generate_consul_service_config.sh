@@ -54,7 +54,7 @@ _services["hashicups-api.upstreams"]="hashicups-db:5432"
 _services["hashicups-frontend.name"]="hashicups-frontend"
 _services["hashicups-frontend.port"]="3000"
 _services["hashicups-frontend.checks"]="hashicups-frontend:localhost:3000"
-_services["hashicups-frontend.upstreams"]="hashicups-api:8081"
+_services["hashicups-frontend.upstreams"]=""
 
 _services["hashicups-nginx.name"]="hashicups-nginx"
 _services["hashicups-nginx.port"]="80"

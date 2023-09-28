@@ -129,10 +129,6 @@ Kind = "service-intentions"
 Name = "hashicups-api"
 Sources = [
   {
-    Name   = "hashicups-frontend"
-    Action = "allow"
-  },
-  {
     Name   = "hashicups-nginx"
     Action = "allow"
   }
@@ -144,10 +140,6 @@ tee ${OUTPUT_FOLDER}global/intention-api.json > /dev/null << EOF
   "Kind": "service-intentions",
   "Name": "hashicups-api",
   "Sources": [
-    {
-      "Action": "allow",
-      "Name": "hashicups-frontend"
-    },
     {
       "Action": "allow",
       "Name": "hashicups-nginx"
@@ -176,6 +168,31 @@ tee ${OUTPUT_FOLDER}global/intention-frontend.json > /dev/null << EOF
     {
       "Action": "allow",
       "Name": "hashicups-nginx"
+    }
+  ]
+}
+EOF
+
+
+tee ${OUTPUT_FOLDER}global/intention-nginx.hcl > /dev/null << EOF
+Kind = "service-intentions"
+Name = "hashicups-nginx"
+Sources = [
+  {
+    Name   = "gateway-api"
+    Action = "allow"
+  }
+]
+EOF
+
+tee ${OUTPUT_FOLDER}global/intention-nginx.json > /dev/null << EOF
+{
+  "Kind": "service-intentions",
+  "Name": "hashicups-nginx",
+  "Sources": [
+    {
+      "Action": "allow",
+      "Name": "gateway-api"
     }
   ]
 }

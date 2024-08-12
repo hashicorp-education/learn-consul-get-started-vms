@@ -65,9 +65,11 @@ if [ "${START_MONITORING_SUITE}" == "true" ]; then
     ## The following steps only work on AWS. Use the reference link for ideas on
     ## how to make platform independent.  
     ## https://github.com/hashicorp-education/learn-nomad-getting-started/blob/main/shared/data-scripts/user-data-client.sh
-    export PROMETHEUS_URI=$(curl -s http://instance-data/latest/meta-data/local-ipv4)
-    export GRAFANA_URI=$(curl -s http://instance-data/latest/meta-data/public-ipv4)
-    export LOKI_URI=$(curl -s http://instance-data/latest/meta-data/local-ipv4)
+    TOKEN=$(curl -X PUT "http://instance-data/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+
+    export PROMETHEUS_URI=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" http://instance-data/latest/meta-data/local-ipv4)
+    export GRAFANA_URI=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" http://instance-data/latest/meta-data/public-ipv4)
+    export LOKI_URI=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" http://instance-data/latest/meta-data/local-ipv4)
     
     log "Configuring DNS for monitoring suite"
     

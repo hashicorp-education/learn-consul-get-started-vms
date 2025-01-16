@@ -19,11 +19,26 @@ export MD_RUNBOOK_FILE="/home/${username}/runbooks/self_managed-${SCENARIO_CLOUD
 ## Remove previous runbook files if any
 rm -rf ${MD_RUNBOOK_FILE}
 
-
 ## Make sure folder exists
 mkdir -p "/home/${username}/runbooks"
 
 sudo chown ${USERNAME} /home/${username}/runbooks
+
+## Configuring Consul DNS port. Not printing this in the MD file.
+export CONSUL_DNS_PORT="53"
+
+## [ux-diff] [cloud provider] UX differs across different Cloud providers
+if [ "${SCENARIO_CLOUD_PROVIDER}" == "docker" ]; then
+  export CONSUL_DNS_PORT="53"
+elif [ "${SCENARIO_CLOUD_PROVIDER}" == "aws" ]; then
+  export CONSUL_DNS_PORT="8600"
+elif [ "${SCENARIO_CLOUD_PROVIDER}" == "azure" ]; then
+  export CONSUL_DNS_PORT="8600"
+else 
+  log_err "Cloud provider $SCENARIO_CLOUD_PROVIDER is unsupported...exiting."
+  exit 245
+fi
+
 
 # ++-----------------+
 # || Begin           |

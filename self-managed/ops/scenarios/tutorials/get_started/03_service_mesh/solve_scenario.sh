@@ -22,6 +22,8 @@ rm -rf ${MD_RUNBOOK_FILE}
 ## Make sure folder exists
 mkdir -p "/home/${username}/runbooks"
 
+sudo chown ${USERNAME} /home/${username}/runbooks
+
 # ++-----------------+
 # || Begin           |
 # ++-----------------+

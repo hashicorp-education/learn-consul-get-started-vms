@@ -150,7 +150,8 @@ for node in "${NODES_ARRAY[@]}"; do
     md_log "First, define the Consul node name."
 
     _RUN_CMD -h 'export NODE_NAME="'${NODE_NAME}'"'
-    
+    export NODE_NAME=${NODE_NAME}
+
     md_log "Then, generate the Consul configuration."
 
     # pushd ${HOME} > /dev/null 2>&1

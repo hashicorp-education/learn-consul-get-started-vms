@@ -1,28 +1,16 @@
-# # Declare TF variables
-# resource "random_string" "suffix" {
-#   length  = 4
-#   special = false
-#   upper   = false
-# }
+#------------------------------------------------------------------------------#
+## Admin Username
+#------------------------------------------------------------------------------#
+## Azure does not permit to have `admin` username but AWS has `admin` username as default.
+## To resolve this in the generic scenarios, we define a variable that contains the username 
+## so that all the scripts can be generated parametrically from it.
+## !! IMPORTANT !! Changing this variable ONLY creates the user in the VM in Azure.
+## For Docker and AWS use the default value `admin`.
 
-# locals {
-#   name = "${var.prefix}-${random_string.suffix.result}"
-# }
+variable "vm_username" {
+  default = "admin"
+}
 
-# locals {
-#   retry_join = "provider=aws tag_key=ConsulJoinTag tag_value=auto-join-${random_string.suffix.result}"
-# }
-
-# ## Flow Control
-# variable "prefix" {
-#   description = "The prefix used for all resources in this plan"
-#   default     = "learn-consul-vms"
-# }
-
-# ## AWS networking
-# variable "vpc_region" {
-#   default = "us-west-2"
-# }
 
 #------------------------------------------------------------------------------#
 ## Consul tuning
@@ -41,16 +29,11 @@ variable "consul_domain" {
 # - exact version         "x.y.z" (e.g. "1.15.0")
 # - latest minor version  "x.y"   (e.g. "1.14" for latest minor vesrion for 1.14)
 # - latest version        "latest"
-## todo currently ignored
+## todo currently ignored - Images are build with a pre-loaded version of Consul installed
 variable "consul_version" {
   description = "Consul version to install on VMs"
   default     = "1.16"
 }
-
-# variable "envoy_version" {
-#   description = "Envoy version to install on VMs"
-#   default     = "1.26.2"
-# }
 
 variable "server_number" {
   description = "Number of Consul servers to deploy. Should be 1, 3, 5, 7."
@@ -63,43 +46,94 @@ variable "retry_join" {
   default     = "consul-server-0"
 }
 
+#------------------------------------------------------------------------------#
+## Consul Flow
+#------------------------------------------------------------------------------#
 
-# #------------------------------------------------------------------------------#
-# ## HashiCups tuning
-# #------------------------------------------------------------------------------#
+variable "enable_service_mesh" {
+  description = "If set to true configures services for service mesh, otherwise for service discovery"
+  default = true
+}
 
-# variable "db_version" {
-#   description = "Version for the HashiCups DB image to be deployed"
-#   default     = "v0.0.22"
-# }
+#------------------------------------------------------------------------------#
+## Consul datacenter Tuning
+#------------------------------------------------------------------------------#
 
-# variable "api_payments_version" {
-#   description = "Version for the HashiCups Payments API image to be deployed"
-#   default     = "latest"
-# }
+variable "api_gw_number" {
+  description = "Number of instances for Consul API Gateways"
+  default     = "1"
+}
 
-# variable "api_product_version" {
-#   description = "Version for the HashiCups Product API image to be deployed"
-#   default     = "v0.0.22"
-# }
+variable "term_gw_number" {
+  description = "Number of instances for Consul Terminating Gateways"
+  default     = "0"
+}
 
-# variable "api_public_version" {
-#   description = "Version for the HashiCups Public API image to be deployed"
-#   default     = "v0.0.7"
-# }
+variable "mesh_gw_number" {
+  description = "Number of instances for Consul Mesh Gateways"
+  default     = "0"
+}
 
-# variable "fe_version" {
-#   description = "Version for the HashiCups Frontend image to be deployed"
-#   default     = "v1.0.9"
-# }
+variable "consul_esm_number" {
+  description = "Number of instances for Consul ESM nodes"
+  default     = "0"
+}
+
+#------------------------------------------------------------------------------#
+## HashiCups tuning
+#------------------------------------------------------------------------------#
+
+variable "hc_db_number" {
+  description = "Number of instances for HashiCups DB service"
+  default     = "1"
+}
+
+variable "hc_api_number" {
+  description = "Number of instances for HashiCups API service"
+  default     = "1"
+}
+
+variable "hc_fe_number" {
+  description = "Number of instances for HashiCups Frontend service"
+  default     = "1"
+}
+
+variable "hc_lb_number" {
+  description = "Number of instances for HashiCups NGINX service"
+  default     = "1"
+}
+
+#------------------------------------------------------------------------------#
+## Monitoring Tuning
+#------------------------------------------------------------------------------#
+
+variable "start_monitoring_suite" {
+  description = "Number of instances for Consul ESM nodes"
+  default     = "false"
+}
+
+variable "register_monitoring_suite" {
+  description = "Register monitoring suite nodes as external services in Consul"
+  default     = "false"
+}
 
 #------------------------------------------------------------------------------#
 ## Scenario tuning
 #------------------------------------------------------------------------------#
 
+variable "base_scenario" {
+  description = "Base scenario that represents the starting point of the infrastructure"
+  default     = "base_consul_dc"
+}
+
 variable "scenario" {
   description = "Prerequisites scenario to run at the end of infrastructure provision"
-  default     = "00_base"
+  default     = "00_test_base"
+}
+
+variable "solve_scenario" {
+  description = "If a solution script is provided, tests the solution against the scenario."
+  default     = "false"
 }
 
 variable "log_level" {

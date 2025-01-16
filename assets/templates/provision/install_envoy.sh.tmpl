@@ -1,14 +1,42 @@
 #!/usr/bin/env bash
 
 ##Retrieve latest compatible Envoy version
-export ENVOY_VERS=`curl -s https://developer.hashicorp.com/consul/docs/connect/proxies/envoy | \
-    grep -Po "Compatible Envoy Versions.*" | \
-    grep -Po "<tr><td>\d\.\d\d\.x</td><td>[0-9\.\,\s]*</td></tr>" | \
-    sed 's/<\/td><td>/ : /' | sed 's/<[tdr\/]*>//g' | \
-    grep \`consul version | grep Consul | grep -oP "(\d\.\d\d)"\` | \
-    sed 's/.*\ :\ //g' | sed 's/,.*//'`
+## OLD VERSION
+# export ENVOY_VERS=`curl -s https://developer.hashicorp.com/consul/docs/connect/proxies/envoy | \
+#     grep -Po "Compatible Envoy Versions.*" | \
+#     grep -Po "<tr><td>\d\.\d\d\.x</td><td>[0-9\.\,\s]*</td></tr>" | \
+#     sed 's/<\/td><td>/ : /' | sed 's/<[tdr\/]*>//g' | \
+#     grep \`consul version | grep Consul | grep -oP "(\d\.\d\d)"\` | \
+#     sed 's/.*\ :\ //g' | sed 's/,.*//'`
 
-cd /home/admin
+## OLD NEW VERSION
+# export ENVOY_VERS=`curl -s https://github.com/hashicorp/consul/blob/main/website/content/docs/connect/proxies/envoy.mdx | \
+#     grep -Po "(?:Envoy and Consul Client Agent.*?)Standard releases(.*?)Enterprise Long Term Support releases" | \
+#     grep -Po "\d\.\d\d\.x (CE)*\s*\|[0-9\.\,\s]*\|" | \
+#     sed 's/CE/  /' | \
+#     sed 's/|/:/' | sed 's/|//' | \
+#     grep \`consul version | grep Consul | grep -oP "(\d\.\d\d)"\` | \
+#     sed 's/.*\ :\ //g' | sed 's/,.*//'`
+
+## NEW NEW VERSION
+ENVOY_VERS=`curl -s https://raw.githubusercontent.com/hashicorp/consul/main/website/content/docs/connect/proxies/envoy.mdx | \
+    grep --color=never -P \`consul version | grep --color=never Consul | grep -oP --color=never "(\d\.\d\d)"\` | \
+    head -1 | \
+    grep -Po "[0-9\.]+x," | \
+    head -1 | \
+    sed 's/.x,/-latest/'`
+
+## FALLBACK
+## In case the page used for Envoy version changes and the above command 
+## does not work the following command will use the HashiCorp repository
+## to retrieve the latest Envoy bversion available there.
+## [WARN] The version retrieved might not work when using Consul version 
+## different from the latest.
+if [ -z "$${ENVOY_VERS}" ]; then
+    export ENVOY_VERS=`apt-cache show hashicorp-envoy | grep Version: | head -1 | awk '{print $2}' | sed -e 's/-[0-9]*//'`
+fi
+
+cd /home/${username}
 
 ## Run container with desired Envoy version
 docker run -d --name envoy envoyproxy/envoy:v$${ENVOY_VERS}

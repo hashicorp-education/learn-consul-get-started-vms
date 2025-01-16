@@ -42,7 +42,6 @@ alias cd..='cd ..'
 
 # Finds last version of HasciCorp OSS tools available
 function hc_versions {
-#	set -x
 	which curl jq &>/dev/null || {
     echo "Function requires curl and jq...install them to continue."
 		exit 1

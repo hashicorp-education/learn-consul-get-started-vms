@@ -8,64 +8,26 @@
 
 resource "local_file" "scenario_env" {
   content = templatefile("${path.module}/../../../assets/templates/provision/scenario_env.env.tmpl", {
-    consul_datacenter = var.consul_datacenter,
-    consul_domain     = var.consul_domain,
-    server_number     = var.server_number,
-    retry_join        = var.retry_join,
-    cloud_provider    = "docker",
-    log_level         = var.log_level
+    consul_datacenter         = var.consul_datacenter,
+    consul_domain             = var.consul_domain,
+    server_number             = var.server_number,
+    retry_join                = var.retry_join,
+    cloud_provider            = "docker",
+    username                  = "${var.vm_username}",
+    log_level                 = var.log_level,
+    enable_service_mesh       = var.enable_service_mesh,
+    hc_db_number              = var.hc_db_number,
+    hc_api_number             = var.hc_api_number,
+    hc_fe_number              = var.hc_fe_number,
+    hc_lb_number              = var.hc_lb_number,
+    api_gw_number             = var.api_gw_number,
+    term_gw_number            = var.term_gw_number,
+    mesh_gw_number            = var.mesh_gw_number,
+    consul_esm_number         = var.consul_esm_number,
+    start_monitoring_suite    = var.start_monitoring_suite,
+    register_monitoring_suite = var.register_monitoring_suite,
+    base_scenario             = var.base_scenario,
+    solve_scenario            = var.solve_scenario
   })
   filename = "${path.module}/../../../assets/scenario/scenario_env.env"
 }
-
-## [feat] [flow] Replace scripts in containers for Docker?  
-# #------------------------------------------------------------------------------#
-# ## HashiCups Application Starting Scripts
-# #------------------------------------------------------------------------------#
-# resource "local_file" "start_hashicups_db" {
-#   content  = templatefile("${path.module}/../../../assets/templates/provision/start_hashicups_db.sh.tmpl", {
-#     VERSION                = var.db_version
-#     CONFIGURE_SERVICE_MESH = var.config_services_for_mesh
-#   })
-#   filename = "${path.module}/../../../assets/scenario/start_hashicups_db.sh"
-# }
-
-# resource "local_file" "start_hashicups_api" {
-#   content  = templatefile("${path.module}/../../../assets/templates/provision/start_hashicups_api.sh.tmpl", {
-#     VERSION_PAY            = var.api_payments_version,
-#     VERSION_PROD           = var.api_product_version,
-#     VERSION_PUB            = var.api_public_version,
-#     DB_HOST                = var.config_services_for_mesh ? "localhost" : aws_instance.database.private_ip,
-#     PRODUCT_API_HOST       = "localhost",
-#     PAYMENT_API_HOST       = "localhost",
-#     CONFIGURE_SERVICE_MESH = var.config_services_for_mesh
-#   })
-#   filename = "${path.module}/../../../assets/scenario/start_hashicups_api.sh"
-# }
-
-# resource "local_file" "start_hashicups_fe" {
-#   content  = templatefile("${path.module}/../../../assets/templates/provision/start_hashicups_fe.sh.tmpl", {
-#     VERSION                = var.fe_version,
-#     API_HOST               = var.config_services_for_mesh ? "localhost" : aws_instance.api.private_ip,
-#     CONFIGURE_SERVICE_MESH = var.config_services_for_mesh
-#   })
-#   filename = "${path.module}/../../../assets/scenario/start_hashicups_fe.sh"
-# }
-
-# resource "local_file" "start_hashicups_nginx" {
-#   content  = templatefile("${path.module}/../../../assets/templates/provision/start_hashicups_nginx.sh.tmpl", {
-#     PUBLIC_API_HOST        = var.config_services_for_mesh ? "localhost" : aws_instance.api.private_ip
-#     FE_HOST                = var.config_services_for_mesh ? "localhost" : aws_instance.frontend.private_ip
-#     CONFIGURE_SERVICE_MESH = var.config_services_for_mesh
-#   })
-#   filename = "${path.module}/../../../assets/scenario/start_hashicups_nginx.sh"
-# }
-
-# #------------------------------------------------------------------------------#
-# ## Grafana monitoring suite starting script
-# #------------------------------------------------------------------------------#
-
-# resource "local_file" "start_monitoring_suite" {
-#   content  = templatefile("${path.module}/../../../assets/templates/provision/start_monitoring_suite.sh.tmpl", {  })
-#   filename = "${path.module}/../../../assets/scenario/start_monitoring_suite.sh"
-# }

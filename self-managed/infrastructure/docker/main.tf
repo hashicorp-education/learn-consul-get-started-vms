@@ -19,7 +19,7 @@ resource "docker_network" "primary_network" {
   name = "learn-consul-network"
   labels {
     label = "tag"
-    value = "learn-consul"
+    value = "learn-consul-vms"
   }
 }
 
@@ -29,10 +29,9 @@ resource "docker_network" "primary_network" {
 
 resource "docker_container" "bastion_host" {
   name     = "bastion"
-  image    = "learn-consul/base-consul:learn-consul"
+  image    = "learn-consul-vms/base-consul:learn-consul-vms"
   hostname = "bastion"
-  # image = docker_image.base_image.image_id
-  # provider = docker.world
+
   networks_advanced {
     name = docker_network.primary_network.id
   }
@@ -44,12 +43,22 @@ resource "docker_container" "bastion_host" {
 
   labels {
     label = "tag"
-    value = "learn-consul"
+    value = "learn-consul-vms"
+  }
+
+  volumes {
+    container_path = "/home/${var.vm_username}/bin"
+    host_path      = abspath("${path.module}/../../../bin")
+  }
+
+  volumes {
+    container_path = "/home/${var.vm_username}/runbooks"
+    host_path      = abspath("${path.module}/../../../runbooks")
   }
 
   connection {
     type        = "ssh"
-    user        = "admin"
+    user        = "${var.vm_username}"
     private_key = file("./images/base/certs/id_rsa")
     host        = "127.0.0.1"
     port        = 2222
@@ -57,20 +66,19 @@ resource "docker_container" "bastion_host" {
 
   provisioner "file" {
     source      = "${path.module}/../../../assets"
-    destination = "/home/admin/"
+    destination = "/home/${var.vm_username}/"
   }
 
   provisioner "file" {
     source      = "${path.module}/../../ops"
-    destination = "/home/admin"
+    destination = "/home/${var.vm_username}"
   }
 
   provisioner "remote-exec" {
     inline = [
-      "cd /home/admin/ops && bash ./provision.sh operate ${var.scenario}"
+      "cd /home/${var.vm_username}/ops && bash ./provision.sh operate ${var.scenario}"
     ]
   }
-
 }
 
 # ----------------- #
@@ -80,16 +88,15 @@ resource "docker_container" "bastion_host" {
 resource "docker_container" "consul_server" {
   name     = "consul-server-${count.index}"
   count    = var.server_number
-  image    = "learn-consul/base-consul:learn-consul"
+  image    = "learn-consul-vms/base-consul:learn-consul-vms"
   hostname = "consul-server-${count.index}"
-  # image = docker_image.base_image.image_id
-  # provider = docker.world
+  
   networks_advanced {
     name = docker_network.primary_network.id
   }
   labels {
     label = "tag"
-    value = "learn-consul"
+    value = "learn-consul-vms"
   }
 
   ports {
@@ -100,94 +107,145 @@ resource "docker_container" "consul_server" {
 }
 
 # ----------------- #
-# | GATEWAY       | #
+# | GATEWAYS       | #
 # ----------------- #
 
 resource "docker_container" "gateway_api" {
-  name     = "gateway_api"
-  image    = "learn-consul/base-consul:learn-consul"
-  hostname = "gateway-api"
-  # image = docker_image.base_image.image_id
-  # provider = docker.world
+  name     = "gateway-api-${count.index}"
+  count    = var.api_gw_number
+  image    = "learn-consul-vms/base-consul:learn-consul-vms"
+  hostname = "gateway-api-${count.index}"
+  
   networks_advanced {
     name = docker_network.primary_network.id
   }
   labels {
     label = "tag"
-    value = "learn-consul"
+    value = "learn-consul-vms"
   }
 
   ports {
-    internal = "8443"
-    external = "9443"
+    internal = format("%d", 8443)
+    external = format("%d", count.index + 9443)
   }
 
 }
+
+resource "docker_container" "gateway_terminating" {
+  name     = "gateway-terminating-${count.index}"
+  count    = var.term_gw_number
+  image    = "learn-consul-vms/base-consul:learn-consul-vms"
+  hostname = "gateway-terminating-${count.index}"
+  
+  networks_advanced {
+    name = docker_network.primary_network.id
+  }
+  labels {
+    label = "tag"
+    value = "learn-consul-vms"
+  }
+}
+
+resource "docker_container" "gateway_mesh" {
+  name     = "gateway-mesh-${count.index}"
+  count    = var.mesh_gw_number
+  image    = "learn-consul-vms/base-consul:learn-consul-vms"
+  hostname = "gateway-mesh-${count.index}"
+  
+  networks_advanced {
+    name = docker_network.primary_network.id
+  }
+  labels {
+    label = "tag"
+    value = "learn-consul-vms"
+  }
+}
+
+# ----------------- #
+# | CONSUL ESM    | #
+# ----------------- #
+
+resource "docker_container" "consul-esm" {
+  name     = "consul-esm-${count.index}"
+  count    = var.consul_esm_number
+  image    = "learn-consul-vms/base-consul:learn-consul-vms"
+  hostname = "consul-esm-${count.index}"
+  
+  networks_advanced {
+    name = docker_network.primary_network.id
+  }
+  labels {
+    label = "tag"
+    value = "learn-consul-vms"
+  }
+}
+
 
 # ----------------- #
 # | DATA PLANE    | #
 # ----------------- #
 
-
 resource "docker_container" "hashicups_nginx" {
-  name     = "hashicups_nginx"
-  image    = "learn-consul/hashicups-nginx:learn-consul"
-  hostname = "hashicups-nginx"
+  name     = "hashicups-nginx-${count.index}"
+  count    = var.hc_lb_number
+  image    = "learn-consul-vms/hashicups-nginx:learn-consul-vms"
+  hostname = "hashicups-nginx-${count.index}"
   networks_advanced {
     name = docker_network.primary_network.id
   }
   labels {
     label = "tag"
-    value = "learn-consul"
+    value = "learn-consul-vms"
   }
 
   ports {
     internal = "80"
-    external = "80"
+    external = "8${count.index}"
   }
-
 }
 
 resource "docker_container" "hashicups_frontend" {
-  name     = "hashicups_frontend"
-  image    = "learn-consul/hashicups-frontend:learn-consul"
-  hostname = "hashicups-frontend"
+  name     = "hashicups-frontend-${count.index}"
+  count    = var.hc_fe_number
+  image    = "learn-consul-vms/hashicups-frontend:learn-consul-vms"
+  hostname = "hashicups-frontend-${count.index}"
   networks_advanced {
     name = docker_network.primary_network.id
   }
   labels {
     label = "tag"
-    value = "learn-consul"
+    value = "learn-consul-vms"
   }
 
 }
 
 resource "docker_container" "hashicups_api" {
-  name     = "hashicups_api"
-  image    = "learn-consul/hashicups-api:learn-consul"
-  hostname = "hashicups-api"
+  name     = "hashicups-api-${count.index}"
+  count    = var.hc_api_number
+  image    = "learn-consul-vms/hashicups-api:learn-consul-vms"
+  hostname = "hashicups-api-${count.index}"
   networks_advanced {
     name = docker_network.primary_network.id
   }
   labels {
     label = "tag"
-    value = "learn-consul"
+    value = "learn-consul-vms"
   }
 
 }
 
 resource "docker_container" "hashicups_db" {
-  name     = "hashicups_db"
-  image    = "learn-consul/hashicups-database:learn-consul"
-  hostname = "hashicups-db"
+  name     = "hashicups-db-${count.index}"
+  count    = var.hc_db_number
+  image    = "learn-consul-vms/hashicups-database:learn-consul-vms"
+  hostname = "hashicups-db-${count.index}"
   networks_advanced {
     name = docker_network.primary_network.id
   }
   labels {
     label = "tag"
-    value = "learn-consul"
+    value = "learn-consul-vms"
   }
-
 }
 
 
@@ -197,6 +255,7 @@ resource "docker_container" "hashicups_db" {
 
 resource "docker_container" "grafana" {
   name     = "grafana"
+  count    = "${var.start_monitoring_suite ? 1 : 0}"
   image    = "grafana/grafana:latest"
   hostname = "grafana"
 
@@ -206,12 +265,13 @@ resource "docker_container" "grafana" {
 
   labels {
     label = "tag"
-    value = "learn-consul"
+    value = "learn-consul-vms"
   }
 
+  ## External port should be 3000, we use 3001 to not conflic with Tutorials preview.
   ports {
     internal = "3000"
-    external = "3000"
+    external = "3001"
   }
 
   volumes {
@@ -239,6 +299,7 @@ resource "docker_container" "grafana" {
 
 resource "docker_container" "loki" {
   name     = "loki"
+  count    = "${var.start_monitoring_suite ? 1 : 0}"
   image    = "grafana/loki:main"
   hostname = "loki"
 
@@ -248,7 +309,7 @@ resource "docker_container" "loki" {
 
   labels {
     label = "tag"
-    value = "learn-consul"
+    value = "learn-consul-vms"
   }
 
   command = ["-config.file=/etc/loki/local-config.yaml"]
@@ -257,6 +318,7 @@ resource "docker_container" "loki" {
 
 resource "docker_container" "mimir" {
   name     = "mimir"
+  count    = "${var.start_monitoring_suite ? 1 : 0}"
   image    = "grafana/mimir:latest"
   hostname = "mimir"
   networks_advanced {
@@ -265,7 +327,7 @@ resource "docker_container" "mimir" {
 
   labels {
     label = "tag"
-    value = "learn-consul"
+    value = "learn-consul-vms"
   }
 
   volumes {

@@ -1,17 +1,37 @@
+
+# Ignore certificates generated
 **/certs/**
-# **/logs/**
+
+# Ignore local binaries used for test environments
+bin/
+
+# Ignore log files
+logs/**
+
+runbooks/**
+# Ignore scripts in the runbooks folder for now
+runbooks/*.sh
 
 ## Bucket folder on dev machine for archiving files rapidly
 **/old/
+
 ## Ignore assets created by the infrastructure or by the scenario operation.
 assets/scenario/**
+
 ## Ignore terraform state related files
 .terraform*
 terraform.tfstate*
 
-*.DS_Store
-
+# Ignore Instruqt related files
+**/instruqt/**
 **/instruqt/
 
+*.DS_Store
+# **/logs/**
 # *.pem
 # acl-token-bootstrap.json
+
+.azure_*
+
+*.jq
+*.tfplan

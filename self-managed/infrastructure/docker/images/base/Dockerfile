@@ -19,9 +19,9 @@ RUN apt-get update
 ## Install `tini` as init process
 RUN DEBIAN_FRONTEND=noninteractive \
 	apt-get --assume-yes install bash bash-completion lsb-release \
-								vim curl wget dnsutils jq iputils-ping tree unzip \
-								procps net-tools\
-								openssl dropbear openssh-client openssh-sftp-server gnupg \
+								vim curl wget jq tree unzip gettext\
+								procps net-tools dnsutils iputils-ping \
+								openssl dropbear openssh-client openssh-sftp-server gnupg rsync \
 								libcap2-bin \
 								tini \
 								sudo && \
@@ -38,6 +38,7 @@ RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/hashicorp-archive-keyrin
 
 ## Give binaries the capability to run on privileged ports without using root
 RUN setcap 'cap_net_bind_service=+ep' /usr/sbin/dropbear
+# RUN setcap 'cap_net_bind_service=+ep' /sbin/iptables
 
 # ----------------- #
 # | USERS         | #

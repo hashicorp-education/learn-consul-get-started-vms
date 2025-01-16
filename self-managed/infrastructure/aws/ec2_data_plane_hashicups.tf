@@ -10,6 +10,7 @@
 
 resource "aws_instance" "database" {
   depends_on    = [module.vpc]
+  count         = var.hc_db_number
   ami           = data.aws_ami.debian-11.id
   instance_type = "t2.micro"
   key_name      = aws_key_pair.keypair.id
@@ -22,29 +23,30 @@ resource "aws_instance" "database" {
   subnet_id = module.vpc.public_subnets[0]
 
   tags = {
-    Name = "hashicups-db"
+    Name = "hashicups-db-${count.index}"
     Application = "hashicups"
   }
 
   user_data = templatefile("${path.module}/../../../assets/templates/cloud-init/user_data_consul_agent.tmpl", {
     ssh_public_key  = base64gzip("${tls_private_key.keypair_private_key.public_key_openssh}"),
     ssh_private_key = base64gzip("${tls_private_key.keypair_private_key.private_key_openssh}"),
-    hostname        = "hashicups-db",
+    hostname        = "hashicups-db-${count.index}",
+    username        = "${var.vm_username}",
     consul_version  = "${var.consul_version}"
   })
 
   connection {
     type        = "ssh"
-    user        = "admin"
+    user        = "${var.vm_username}"
     private_key = tls_private_key.keypair_private_key.private_key_pem
     host        = self.public_ip
   }
-  # file, local-exec, remote-exec
-  ## Install Envoy
-  provisioner "file" {
-    content     = templatefile("${path.module}/../../../assets/templates/provision/install_envoy.sh.tmpl", {})
-    destination = "/home/admin/install_envoy.sh" # remote machine
-  }
+  # # file, local-exec, remote-exec
+  # ## Install Envoy
+  # provisioner "file" {
+  #   content     = templatefile("${path.module}/../../../assets/templates/provision/install_envoy.sh.tmpl", {})
+  #   destination = "/home/${var.vm_username}/install_envoy.sh" # remote machine
+  # }
 
   iam_instance_profile = aws_iam_instance_profile.instance_profile.name
 
@@ -60,6 +62,7 @@ resource "aws_instance" "database" {
 
 resource "aws_instance" "api" {
   depends_on    = [module.vpc]
+  count         = var.hc_api_number
   ami           = data.aws_ami.debian-11.id
   instance_type = "t2.micro"
   key_name      = aws_key_pair.keypair.id
@@ -72,29 +75,30 @@ resource "aws_instance" "api" {
   subnet_id = module.vpc.public_subnets[0]
 
   tags = {
-    Name = "hashicups-api"
+    Name = "hashicups-api-${count.index}"
     Application = "hashicups"
   }
 
   user_data = templatefile("${path.module}/../../../assets/templates/cloud-init/user_data_consul_agent.tmpl", {
     ssh_public_key  = base64gzip("${tls_private_key.keypair_private_key.public_key_openssh}"),
     ssh_private_key = base64gzip("${tls_private_key.keypair_private_key.private_key_openssh}"),
-    hostname        = "hashicups-api",
+    hostname        = "hashicups-api-${count.index}",
+    username        = "${var.vm_username}",
     consul_version  = "${var.consul_version}"
   })
 
   connection {
     type        = "ssh"
-    user        = "admin"
+    user        = "${var.vm_username}"
     private_key = tls_private_key.keypair_private_key.private_key_pem
     host        = self.public_ip
   }
-  # file, local-exec, remote-exec
-  ## Install Envoy
-  provisioner "file" {
-    content     = templatefile("${path.module}/../../../assets/templates/provision/install_envoy.sh.tmpl", {})
-    destination = "/home/admin/install_envoy.sh" # remote machine
-  }
+  # # file, local-exec, remote-exec
+  # ## Install Envoy
+  # provisioner "file" {
+  #   content     = templatefile("${path.module}/../../../assets/templates/provision/install_envoy.sh.tmpl", {})
+  #   destination = "/home/${var.vm_username}/install_envoy.sh" # remote machine
+  # }
 
   iam_instance_profile = aws_iam_instance_profile.instance_profile.name
 
@@ -110,6 +114,7 @@ resource "aws_instance" "api" {
 
 resource "aws_instance" "frontend" {
   depends_on    = [module.vpc]
+  count         = var.hc_fe_number
   ami           = data.aws_ami.debian-11.id
   instance_type = "t2.micro"
   key_name      = aws_key_pair.keypair.id
@@ -122,29 +127,30 @@ resource "aws_instance" "frontend" {
   subnet_id = module.vpc.public_subnets[0]
 
   tags = {
-    Name = "hashicups-frontend"
+    Name = "hashicups-frontend-${count.index}"
     Application = "hashicups"
   }
 
   user_data = templatefile("${path.module}/../../../assets/templates/cloud-init/user_data_consul_agent.tmpl", {
     ssh_public_key  = base64gzip("${tls_private_key.keypair_private_key.public_key_openssh}"),
     ssh_private_key = base64gzip("${tls_private_key.keypair_private_key.private_key_openssh}"),
-    hostname        = "hashicups-frontend",
+    hostname        = "hashicups-frontend-${count.index}",
+    username        = "${var.vm_username}",
     consul_version  = "${var.consul_version}"
   })
 
   connection {
     type        = "ssh"
-    user        = "admin"
+    user        = "${var.vm_username}"
     private_key = tls_private_key.keypair_private_key.private_key_pem
     host        = self.public_ip
   }
-  # file, local-exec, remote-exec
-  ## Install Envoy
-  provisioner "file" {
-    content     = templatefile("${path.module}/../../../assets/templates/provision/install_envoy.sh.tmpl", {})
-    destination = "/home/admin/install_envoy.sh" # remote machine
-  }
+  # # file, local-exec, remote-exec
+  # ## Install Envoy
+  # provisioner "file" {
+  #   content     = templatefile("${path.module}/../../../assets/templates/provision/install_envoy.sh.tmpl", {})
+  #   destination = "/home/${var.vm_username}/install_envoy.sh" # remote machine
+  # }
 
   iam_instance_profile = aws_iam_instance_profile.instance_profile.name
 
@@ -160,6 +166,7 @@ resource "aws_instance" "frontend" {
 
 resource "aws_instance" "nginx" {
   depends_on                  = [module.vpc]
+  count                       = var.hc_lb_number
   ami                         = data.aws_ami.debian-11.id
   associate_public_ip_address = true
   instance_type               = "t2.micro"
@@ -173,29 +180,30 @@ resource "aws_instance" "nginx" {
   subnet_id = module.vpc.public_subnets[0]
 
   tags = {
-    Name = "hashicups-nginx"
+    Name = "hashicups-nginx-${count.index}"
     Application = "hashicups"
   }
 
   user_data = templatefile("${path.module}/../../../assets/templates/cloud-init/user_data_consul_agent.tmpl", {
     ssh_public_key  = base64gzip("${tls_private_key.keypair_private_key.public_key_openssh}"),
     ssh_private_key = base64gzip("${tls_private_key.keypair_private_key.private_key_openssh}"),
-    hostname        = "hashicups-nginx",
+    hostname        = "hashicups-nginx-${count.index}",
+    username        = "${var.vm_username}",
     consul_version  = "${var.consul_version}"
   })
 
   connection {
     type        = "ssh"
-    user        = "admin"
+    user        = "${var.vm_username}"
     private_key = tls_private_key.keypair_private_key.private_key_pem
     host        = self.public_ip
   }
-  # file, local-exec, remote-exec
-  ## Install Envoy
-  provisioner "file" {
-    content     = templatefile("${path.module}/../../../assets/templates/provision/install_envoy.sh.tmpl", {})
-    destination = "/home/admin/install_envoy.sh" # remote machine
-  }
+  # # file, local-exec, remote-exec
+  # ## Install Envoy
+  # provisioner "file" {
+  #   content     = templatefile("${path.module}/../../../assets/templates/provision/install_envoy.sh.tmpl", {})
+  #   destination = "/home/${var.vm_username}/install_envoy.sh" # remote machine
+  # }
 
   iam_instance_profile = aws_iam_instance_profile.instance_profile.name
 

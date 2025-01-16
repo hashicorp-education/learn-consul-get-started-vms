@@ -98,7 +98,6 @@ fi
 ## Exit Image folder
 popd > /dev/null 2>&1
 
-
 # +--------------------+ #
 # | BUILD BASE_CONSUL  | #
 # +--------------------+ #
@@ -112,10 +111,12 @@ IMAGE_TAG="${DOCKER_REPOSITORY}/${DOCKER_BASE_CONSUL}:v${CONSUL_VERSION}"
 LATEST_TAG="-t ${DOCKER_REPOSITORY}/${DOCKER_BASE_CONSUL}:latest"
 LS_TAG="-t ${DOCKER_REPOSITORY}/${DOCKER_BASE_CONSUL}:${DOCKER_REPOSITORY}"
 
+ENVOY_NEW_VERSION=`echo ${ENVOY_VERSION} | sed 's/.x/-latest/'`
+
 ## Build Docker image
 DOCKER_BUILDKIT=1 docker build \
   --build-arg CONSUL_VERSION=${CONSUL_VERSION} \
-  --build-arg ENVOY_VERSION=v${ENVOY_VERSION} \
+  --build-arg ENVOY_VERSION=v${ENVOY_NEW_VERSION} \
   --build-arg BASE_IMAGE="${DOCKER_REPOSITORY}/${DOCKER_BASE_IMAGE}:latest" \
   -t "${IMAGE_TAG}" ${LATEST_TAG} ${LS_TAG} . > /dev/null 2>&1
 
@@ -126,7 +127,6 @@ fi
 
 ## Exit Image folder
 popd > /dev/null 2>&1
-
 
 # +--------------------+ #
 # | BUILD HASHICUPS-*  | #
@@ -148,7 +148,7 @@ LS_TAG="-t ${DOCKER_REPOSITORY}/${IMAGE_NAME}:${DOCKER_REPOSITORY}"
 ## Build Docker image
 DOCKER_BUILDKIT=1 docker build \
   --build-arg BASE_IMAGE="${DOCKER_REPOSITORY}/${DOCKER_BASE_CONSUL}:latest" \
-  -t "${IMAGE_TAG}" ${LATEST_TAG} ${LS_TAG} . > /dev/null 2>&1
+  -t "${IMAGE_TAG}" ${LATEST_TAG} ${LS_TAG} . > /dev/null 2>&1 &
 
 if [ $? != 0 ]; then
   ts_log "\033[1m\033[31m[ERROR]\033[0m - Failed build for ${DOCKER_REPOSITORY}/${IMAGE_NAME}...exiting."
@@ -156,6 +156,9 @@ if [ $? != 0 ]; then
 fi
 
 popd > /dev/null 2>&1
+
+# ==============================================================================
+# ==============================================================================
 
 # +--------------------+ #
 # | API                | #
@@ -176,7 +179,7 @@ DOCKER_BUILDKIT=1 docker build \
   --build-arg APP2_VERSION="${HC_API_PRODUCT_VERSION}" \
   --build-arg APP3_VERSION="${HC_API_PAYMENTS_VERSION}" \
   --build-arg BASE_IMAGE="${DOCKER_REPOSITORY}/${DOCKER_BASE_CONSUL}:latest" \
-  -t "${IMAGE_TAG}" ${LATEST_TAG} ${LS_TAG} . > /dev/null 2>&1
+  -t "${IMAGE_TAG}" ${LATEST_TAG} ${LS_TAG} . > /dev/null 2>&1 &
 
 if [ $? != 0 ]; then
   ts_log "\033[1m\033[31m[ERROR]\033[0m - Failed build for ${DOCKER_REPOSITORY}/${IMAGE_NAME}...exiting."
@@ -184,6 +187,9 @@ if [ $? != 0 ]; then
 fi
 
 popd > /dev/null 2>&1
+
+# ==============================================================================
+# ==============================================================================
 
 # +--------------------+ #
 # | FRONTEND           | #
@@ -202,7 +208,7 @@ LS_TAG="-t ${DOCKER_REPOSITORY}/${IMAGE_NAME}:${DOCKER_REPOSITORY}"
 DOCKER_BUILDKIT=1 docker build \
   --build-arg APP_VERSION="" \
   --build-arg BASE_IMAGE="${DOCKER_REPOSITORY}/${DOCKER_BASE_CONSUL}:latest" \
-  -t "${IMAGE_TAG}" ${LATEST_TAG} ${LS_TAG} . > /dev/null 2>&1
+  -t "${IMAGE_TAG}" ${LATEST_TAG} ${LS_TAG} . > /dev/null 2>&1 &
 
 if [ $? != 0 ]; then
   ts_log "\033[1m\033[31m[ERROR]\033[0m - Failed build for ${DOCKER_REPOSITORY}/${IMAGE_NAME}...exiting."
@@ -210,6 +216,9 @@ if [ $? != 0 ]; then
 fi
 
 popd > /dev/null 2>&1
+
+# ==============================================================================
+# ==============================================================================
 
 # +--------------------+ #
 # | NGINX              | #
@@ -228,7 +237,7 @@ LS_TAG="-t ${DOCKER_REPOSITORY}/${IMAGE_NAME}:${DOCKER_REPOSITORY}"
 DOCKER_BUILDKIT=1 docker build \
   --build-arg APP_VERSION="" \
   --build-arg BASE_IMAGE="${DOCKER_REPOSITORY}/${DOCKER_BASE_CONSUL}:latest" \
-  -t "${IMAGE_TAG}" ${LATEST_TAG} ${LS_TAG} . > /dev/null 2>&1
+  -t "${IMAGE_TAG}" ${LATEST_TAG} ${LS_TAG} . > /dev/null 2>&1 &
 
 if [ $? != 0 ]; then
   ts_log "\033[1m\033[31m[ERROR]\033[0m - Failed build for ${DOCKER_REPOSITORY}/${IMAGE_NAME}...exiting."
@@ -236,6 +245,8 @@ if [ $? != 0 ]; then
 fi
 
 popd > /dev/null 2>&1
+
+wait
 
 # +---------------------+ #
 # | LIST CREATED IMAGES | #

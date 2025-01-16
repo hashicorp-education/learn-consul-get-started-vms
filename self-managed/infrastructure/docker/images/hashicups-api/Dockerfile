@@ -43,8 +43,13 @@ COPY --from=application3 spring-boot-payments-*.jar /bin/spring-boot-payments.ja
 # ----------------- #
 
 # Install startup script
-COPY start_api.sh /home/admin/start_service.sh
+# COPY start_api.sh /home/admin/start_service_old.sh
+# RUN  chown -R 1000:1000 /home/admin/start_service_old.sh && chmod +x /home/admin/start_service_old.sh
+COPY hc_api.sh /home/admin/start_service.sh
 RUN  chown -R 1000:1000 /home/admin/start_service.sh && chmod +x /home/admin/start_service.sh
+
+COPY hc_api.sh /home/admin/hc_service.sh
+RUN  chown -R 1000:1000 /home/admin/hc_service.sh && chmod +x /home/admin/hc_service.sh
 
 EXPOSE 8080
 

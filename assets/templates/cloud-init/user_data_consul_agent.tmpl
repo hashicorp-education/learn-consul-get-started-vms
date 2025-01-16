@@ -17,6 +17,11 @@ packages:
   - jq
   - dnsutils
   - tree
+  - net-tools
+  - rsync
+  - unzip
+  - postgresql-client
+  - gettext
 write_files:
   - path: /etc/hosts
     content: | 
@@ -36,20 +41,58 @@ write_files:
       ff02::2 ip6-allrouters
       ff02::3 ip6-allhosts
     append: false
+  - path: /home/${username}/install_envoy.sh
+    content: | 
+      #!/usr/bin/env bash
+
+      ##Retrieve latest compatible Envoy version
+
+      ENVOY_VERS=`curl -s https://raw.githubusercontent.com/hashicorp/consul/main/website/content/docs/connect/proxies/envoy.mdx | \
+        grep --color=never -P \`consul version | grep --color=never Consul | grep -oP --color=never "(\d\.\d\d)"\` | \
+        head -1 | \
+        grep -Po "[0-9\.]+x," | \
+        head -1 | \
+        sed 's/.x,/-latest/'`
+
+      ## FALLBACK
+      ## In case the page used for Envoy version changes and the above command 
+      ## does not work the following command will use the HashiCorp repository
+      ## to retrieve the latest Envoy bversion available there.
+      ## [WARN] The version retrieved might not work when using Consul version 
+      ## different from the latest.
+      if [ -z "$${ENVOY_VERS}" ]; then
+        export ENVOY_VERS=`apt-cache show hashicorp-envoy | grep Version: | head -1 | awk '{print $2}' | sed -e 's/-[0-9]*//'`
+      fi
+
+      cd /home/${username}
+
+      ## Run container with desired Envoy version
+      docker run -d --name envoy envoyproxy/envoy:v$${ENVOY_VERS}
+
+      ## Copy binary locally (works only on GNU/Linux)
+      sudo docker cp envoy:/usr/local/bin/envoy /usr/bin/envoy
+      sudo chown consul:consul /usr/bin/envoy
+
+      ## Cleans Docker cache
+      docker rm -f envoy
+      docker image rm -f envoyproxy/envoy:v$${ENVOY_VERS}
+    append: false
 runcmd:
 # set hostname
  - hostnamectl set-hostname --static ${hostname}
+# Make sure home is writable
+ - chown ${username}:${username} /home/${username}
 # Provision certificates
- - cd /home/admin
+ - cd /home/${username}
  - mkdir -p certs
  - echo "${ssh_public_key}" | base64 -d | zcat > certs/id_rsa.pub
  - echo "${ssh_private_key}" | base64 -d | zcat > certs/id_rsa
 # Make scripts executable
- - chown admin:admin *.sh
+ - chown ${username}:${username} *.sh
  - chmod +x *.sh
 # Install Docker
  - curl -fsSL https://get.docker.com | sh
- - usermod -aG docker admin
+ - usermod -aG docker ${username}
  - chmod 666 /var/run/docker.sock
 # Install Consul
  - wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor | sudo tee /usr/share/keyrings/hashicorp-archive-keyring.gpg
@@ -57,31 +100,16 @@ runcmd:
  - sudo apt update 
  - APT_VERS=`sudo apt-cache show consul | grep Version | awk '{print $2}' | grep "^${consul_version}" | sort -r -V | head -1`; if [ "$${APT_VERS}"  = "" -o "${consul_version}" = "latest" ]; then export VERS=""; else export VERS="=$${APT_VERS}"; fi
  - sudo apt-get install --assume-yes consul$${VERS}
- - usermod -aG consul admin
+ - usermod -aG consul ${username}
  - chmod g+w /etc/consul.d
  - sudo cp /usr/lib/systemd/system/consul.service /etc/systemd/system/consul.service
 # Install Envoy (requires Consul binary and Docker)
- - cd /home/admin
+ - cd /home/${username}
  - ./install_envoy.sh
 # Install Grafana agent
  - wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | sudo tee /usr/share/keyrings/grafana.gpg
  - echo "deb [signed-by=/usr/share/keyrings/grafana.gpg] https://apt.grafana.com stable main" | sudo tee /etc/apt/sources.list.d/grafana.list
  - sudo apt update && sudo apt-get install grafana-agent
-# # Make scripts executable
-#  - cd /home/admin
-#  - chmod +x *.sh
-# # Configure Consul
-#  - ./consul_config.sh 
-# # Configure Consul services
-#  - ./service_config.sh
-# # Start Application
-#  - ./start_app.sh
-# # Start Consul agents
-#  - ./start_consul.sh
-# # Start Consul agents
-#  - sudo chmod +x ./start_sidecar.sh
-#  - ./start_sidecar.sh
-# # # Grafana Agent Config
-# #  - ./grafana_agent_config.sh
-# # # Grafana Agent Config
-# #  - ./start_grafana_agent.sh
+# Install consul-template
+ - sudo apt-get install --assume-yes consul-template
+ 

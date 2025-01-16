@@ -17,6 +17,10 @@ packages:
   - jq
   - dnsutils
   - tree
+  - net-tools
+  - rsync
+  - unzip
+  - gettext
 write_files:
   - path: /etc/hosts
     content: | 
@@ -41,17 +45,19 @@ runcmd:
  - hostnamectl set-hostname --static ${hostname}
 # Setup DNS
  - echo "${HOSTS_EXTRA_CONFIG}" | base64 -d | sudo zcat >> /etc/hosts
+# Make sure home is writable
+ - chown ${username}:${username} /home/${username}
 # Provision certificates
- - cd /home/admin
+ - cd /home/${username}
  - mkdir -p certs
  - echo "${ssh_public_key}" | base64 -d | zcat > certs/id_rsa.pub
  - echo "${ssh_private_key}" | base64 -d | zcat > certs/id_rsa
 # Make scripts executable
- - chown admin:admin *.sh
+ - chown ${username}:${username} *.sh
  - chmod +x *.sh
 # Install Docker
  - curl -fsSL https://get.docker.com | sh
- - usermod -aG docker admin
+ - usermod -aG docker ${username}
  - chmod 666 /var/run/docker.sock
 # Install Consul
  - wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor | sudo tee /usr/share/keyrings/hashicorp-archive-keyring.gpg
@@ -59,36 +65,15 @@ runcmd:
  - sudo apt update 
  - APT_VERS=`sudo apt-cache show consul | grep Version | awk '{print $2}' | grep "^${consul_version}" | sort -r -V | head -1`; if [ "$${APT_VERS}"  = "" -o "${consul_version}" = "latest" ]; then export VERS=""; else export VERS="=$${APT_VERS}"; fi
  - sudo apt-get install --assume-yes consul$${VERS}
- - usermod -aG consul admin
+ - usermod -aG consul ${username}
  - chmod g+w /etc/consul.d
  - sudo cp /usr/lib/systemd/system/consul.service /etc/systemd/system/consul.service
 # Install HashiStack
  - sudo apt-get install --assume-yes terraform vault consul-template
 # Install Envoy (requires Consul binary and Docker)
- - cd /home/admin
+ - cd /home/${username}
  - ./install_envoy.sh
 # Install Grafana agent
  - wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | sudo tee /usr/share/keyrings/grafana.gpg
  - echo "deb [signed-by=/usr/share/keyrings/grafana.gpg] https://apt.grafana.com stable main" | sudo tee /etc/apt/sources.list.d/grafana.list
  - sudo apt update && sudo apt-get install grafana-agent
-# # Provision scenario
-#  - cd /home/admin/ops 
-#  - bash ./provision.sh test
-# # Make scripts executable
-#  - cd /home/admin
-#  - chmod +x *.sh
-# # Configure Consul
-#  - ./consul_config.sh 
-# # Configure Consul services
-#  - ./service_config.sh
-# # Start Application
-#  - ./start_app.sh
-# # Start Consul agents
-#  - ./start_consul.sh
-# # Start Consul agents
-#  - sudo chmod +x ./start_sidecar.sh
-#  - ./start_sidecar.sh
-# # # Grafana Agent Config
-# #  - ./grafana_agent_config.sh
-# # # Grafana Agent Config
-# #  - ./start_grafana_agent.sh

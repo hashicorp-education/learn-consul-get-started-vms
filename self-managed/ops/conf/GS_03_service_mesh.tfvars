@@ -9,7 +9,7 @@ consul_datacenter   = "dc1"
 consul_domain   = "consul"
 
 # Number of Consul servers to deploy for Consul control plane
-server_number   = 3
+server_number   = 1
 
 # Number of instances for each service of Hashicups
 # Scenarios will configure and start Consul in ALL service instances.
@@ -20,7 +20,7 @@ hc_fe_number    = 1
 hc_lb_number    = 1
 
 # Number of instances for each Gateway type
-api_gw_number   = 2
+api_gw_number   = 1
 term_gw_number  = 0
 mesh_gw_number  = 0
 

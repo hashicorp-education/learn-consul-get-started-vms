@@ -248,14 +248,6 @@ for node in "${NODES_ARRAY[@]}"; do
 
     _CONNECT_TO ${NODE_NAME}
 
-
-#     md_log "Define the Consul configuration and data directories."
-
-#     _RUN_CMD -h 'export CONSUL_CONFIG_DIR=/etc/consul.d/ \
-# export CONSUL_DATA_DIR=/opt/consul/'
-#     export CONSUL_CONFIG_DIR=/etc/consul.d/
-#     export CONSUL_DATA_DIR=/opt/consul/
-
     md_log "Ensure your user has write permission to the Consul data directory."
 
     _RUN_CMD -r ${NODE_NAME} -h 'sudo chmod g+w /opt/consul/'

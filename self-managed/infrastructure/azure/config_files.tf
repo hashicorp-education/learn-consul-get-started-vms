@@ -39,8 +39,8 @@ resource "local_file" "scenario_env" {
 resource "local_file" "start_hashicups_db" {
   content  = templatefile("${path.module}/../../../assets/templates/provision/start_hashicups_db.sh.tmpl", {
     username               = "${var.vm_username}",
-    VERSION                = var.db_version,
-    CONFIGURE_SERVICE_MESH = var.enable_service_mesh
+    VERSION                = var.db_version
+    # CONFIGURE_SERVICE_MESH = var.enable_service_mesh
   })
   filename = "${path.module}/../../../assets/scenario/start_hashicups_db.sh"
 }
@@ -52,10 +52,11 @@ resource "local_file" "start_hashicups_api" {
     VERSION_PAY            = var.api_payments_version,
     VERSION_PROD           = var.api_product_version,
     VERSION_PUB            = var.api_public_version,
-    DB_HOST                = var.enable_service_mesh ? "localhost" : "${element(concat(azurerm_linux_virtual_machine.hashicups-db.*.private_ip_address, tolist([""])), 0)}",
+    DB_HOST                = "${element(concat(azurerm_linux_virtual_machine.hashicups-db.*.private_ip_address, tolist([""])), 0)}",
     PRODUCT_API_HOST       = "localhost",
-    PAYMENT_API_HOST       = "localhost",
-    CONFIGURE_SERVICE_MESH = var.enable_service_mesh
+    PAYMENT_API_HOST       = "localhost"
+    # DB_HOST                = var.enable_service_mesh ? "localhost" : "${element(concat(azurerm_linux_virtual_machine.hashicups-db.*.private_ip_address, tolist([""])), 0)}",
+    # CONFIGURE_SERVICE_MESH = var.enable_service_mesh
   })
   filename = "${path.module}/../../../assets/scenario/start_hashicups_api.sh"
 }
@@ -63,10 +64,11 @@ resource "local_file" "start_hashicups_api" {
 ## [ ] parametrize for hostname
 resource "local_file" "start_hashicups_fe" {
   content  = templatefile("${path.module}/../../../assets/templates/provision/start_hashicups_fe.sh.tmpl", {
-    username               = "${var.vm_username}",
-    VERSION                = var.fe_version,
-    API_HOST               = var.enable_service_mesh ? "localhost" : "${element(concat(azurerm_linux_virtual_machine.hashicups-api.*.private_ip_address, tolist([""])), 0)}",
-    CONFIGURE_SERVICE_MESH = var.enable_service_mesh
+    username = "${var.vm_username}",
+    VERSION  = var.fe_version,
+    API_HOST = "${element(concat(azurerm_linux_virtual_machine.hashicups-api.*.private_ip_address, tolist([""])), 0)}",
+    # API_HOST               = var.enable_service_mesh ? "localhost" : "${element(concat(azurerm_linux_virtual_machine.hashicups-api.*.private_ip_address, tolist([""])), 0)}",
+    # CONFIGURE_SERVICE_MESH = var.enable_service_mesh
   })
   filename = "${path.module}/../../../assets/scenario/start_hashicups_frontend.sh"
 }
@@ -75,9 +77,9 @@ resource "local_file" "start_hashicups_fe" {
 resource "local_file" "start_hashicups_nginx" {
   content  = templatefile("${path.module}/../../../assets/templates/provision/start_hashicups_nginx.sh.tmpl", {
     username               = "${var.vm_username}",
-    PUBLIC_API_HOST        = var.enable_service_mesh ? "localhost" : "${element(concat(azurerm_linux_virtual_machine.hashicups-api.*.private_ip_address, tolist([""])), 0)}",
-    FE_HOST                = var.enable_service_mesh ? "localhost" : "${element(concat(azurerm_linux_virtual_machine.hashicups-frontend.*.private_ip_address, tolist([""])), 0)}",
-    CONFIGURE_SERVICE_MESH = var.enable_service_mesh
+    PUBLIC_API_HOST        = "${element(concat(azurerm_linux_virtual_machine.hashicups-api.*.private_ip_address, tolist([""])), 0)}",
+    FE_HOST                = "${element(concat(azurerm_linux_virtual_machine.hashicups-frontend.*.private_ip_address, tolist([""])), 0)}"
+    # CONFIGURE_SERVICE_MESH = var.enable_service_mesh
   })
   filename = "${path.module}/../../../assets/scenario/start_hashicups_nginx.sh"
 }

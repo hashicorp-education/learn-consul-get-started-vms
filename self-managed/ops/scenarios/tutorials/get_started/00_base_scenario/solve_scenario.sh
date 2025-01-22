@@ -96,8 +96,7 @@ _RUN_CMD -h 'export CONSUL_DOMAIN=${DOMAIN} \
   export CONSUL_DATACENTER=${DATACENTER} \
   export CONSUL_SERVER_NUMBER=${SERVER_NUMBER} \
   export CONSUL_DATA_DIR=/opt/consul \
-  export CONSUL_CONFIG_DIR=/etc/consul.d/ \
-  export CONSUL_RETRY_JOIN=consul-server-0'
+  export CONSUL_CONFIG_DIR=/etc/consul.d/'
 
 export CONSUL_DOMAIN=${CONSUL_DOMAIN}
 export CONSUL_DATACENTER=${CONSUL_DATACENTER}
@@ -125,7 +124,7 @@ md_log "A Consul datacenter is composed by multiple nodes that, at startup, conn
 To be able to automatically locate other nodes at startup, Consul configuration needs a retry_join parameter.
 "
 
-_RUN_CMD -h "export CONSUL_RETRY_JOIN=consul-server-0"
+_RUN_CMD -h "export CONSUL_RETRY_JOIN=${CONSUL_RETRY_JOIN}"
 # export CONSUL_RETRY_JOIN="consul-server-0"
 export CONSUL_RETRY_JOIN
 
@@ -600,5 +599,5 @@ By default, Consul DNS service is configured to listen on port `8600`.'
 ## [ux-diff] [cloud provider] UX differs across different Cloud providers
 
 ## Only works in Docker
-_RUN_CMD -c 'dig @consul-server-0 -p 53 consul.service.consul'
+_RUN_CMD -c 'dig @consul-server-0 -p '${CONSUL_DNS_PORT}' consul.service.consul'
 

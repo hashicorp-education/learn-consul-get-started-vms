@@ -39,7 +39,7 @@ resource "local_file" "scenario_env" {
 resource "local_file" "start_hashicups_db" {
   content  = templatefile("${path.module}/../../../assets/templates/provision/start_hashicups_db.sh.tmpl", {
     VERSION                = var.db_version
-    CONFIGURE_SERVICE_MESH = var.enable_service_mesh
+    # CONFIGURE_SERVICE_MESH = var.enable_service_mesh
   })
   filename = "${path.module}/../../../assets/scenario/start_hashicups_db.sh"
 }
@@ -47,14 +47,15 @@ resource "local_file" "start_hashicups_db" {
 ## [ ] parametrize for hostname
 resource "local_file" "start_hashicups_api" {
   content  = templatefile("${path.module}/../../../assets/templates/provision/start_hashicups_api.sh.tmpl", {
-    username               = "${var.vm_username}",
-    VERSION_PAY            = var.api_payments_version,
-    VERSION_PROD           = var.api_product_version,
-    VERSION_PUB            = var.api_public_version,
-    DB_HOST                = var.enable_service_mesh ? "localhost" : "${element(concat(aws_instance.database.*. private_ip, tolist([""])), 0)}",
-    PRODUCT_API_HOST       = "localhost",
-    PAYMENT_API_HOST       = "localhost",
-    CONFIGURE_SERVICE_MESH = var.enable_service_mesh
+    username         = "${var.vm_username}",
+    VERSION_PAY      = var.api_payments_version,
+    VERSION_PROD     = var.api_product_version,
+    VERSION_PUB      = var.api_public_version,
+    DB_HOST          = "${element(concat(aws_instance.database.*. private_ip, tolist([""])), 0)}",
+    PRODUCT_API_HOST = "localhost",
+    PAYMENT_API_HOST = "localhost"
+    # DB_HOST                = var.enable_service_mesh ? "localhost" : "${element(concat(aws_instance.database.*. private_ip, tolist([""])), 0)}",
+    # CONFIGURE_SERVICE_MESH = var.enable_service_mesh
   })
   filename = "${path.module}/../../../assets/scenario/start_hashicups_api.sh"
 }
@@ -62,9 +63,10 @@ resource "local_file" "start_hashicups_api" {
 ## [ ] parametrize for hostname
 resource "local_file" "start_hashicups_fe" {
   content  = templatefile("${path.module}/../../../assets/templates/provision/start_hashicups_fe.sh.tmpl", {
-    VERSION                = var.fe_version,
-    API_HOST               = var.enable_service_mesh ? "localhost" : "${element(concat(aws_instance.api.*. private_ip, tolist([""])), 0)}",
-    CONFIGURE_SERVICE_MESH = var.enable_service_mesh
+    VERSION   = var.fe_version,
+    API_HOST  = "${element(concat(aws_instance.api.*. private_ip, tolist([""])), 0)}"
+    # API_HOST               = var.enable_service_mesh ? "localhost" : "${element(concat(aws_instance.api.*. private_ip, tolist([""])), 0)}",
+    # CONFIGURE_SERVICE_MESH = var.enable_service_mesh
   })
   filename = "${path.module}/../../../assets/scenario/start_hashicups_frontend.sh"
 }
@@ -73,9 +75,11 @@ resource "local_file" "start_hashicups_fe" {
 resource "local_file" "start_hashicups_nginx" {
   content  = templatefile("${path.module}/../../../assets/templates/provision/start_hashicups_nginx.sh.tmpl", {
     username               = "${var.vm_username}",
-    PUBLIC_API_HOST        = var.enable_service_mesh ? "localhost" : "${element(concat(aws_instance.api.*. private_ip, tolist([""])), 0)}",
-    FE_HOST                = var.enable_service_mesh ? "localhost" : "${element(concat(aws_instance.frontend.*. private_ip, tolist([""])), 0)}",
-    CONFIGURE_SERVICE_MESH = var.enable_service_mesh
+    PUBLIC_API_HOST        = "${element(concat(aws_instance.api.*. private_ip, tolist([""])), 0)}",
+    FE_HOST                = "${element(concat(aws_instance.frontend.*. private_ip, tolist([""])), 0)}"
+    # PUBLIC_API_HOST        = var.enable_service_mesh ? "localhost" : "${element(concat(aws_instance.api.*. private_ip, tolist([""])), 0)}",
+    # FE_HOST                = var.enable_service_mesh ? "localhost" : "${element(concat(aws_instance.frontend.*. private_ip, tolist([""])), 0)}",
+    # CONFIGURE_SERVICE_MESH = var.enable_service_mesh
   })
   filename = "${path.module}/../../../assets/scenario/start_hashicups_nginx.sh"
 }

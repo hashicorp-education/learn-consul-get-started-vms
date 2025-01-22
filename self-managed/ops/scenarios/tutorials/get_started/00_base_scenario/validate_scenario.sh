@@ -53,7 +53,7 @@ export CONSUL_CACERT="${STEP_ASSETS}secrets/consul-agent-ca.pem"
 export CONSUL_TLS_SERVER_NAME="server.${DATACENTER}.${DOMAIN}"
 export CONSUL_FQDN_ADDR="consul-server-0"
 
-if [ -f "~/acl-token-bootstrap.json" ]; then
+if [ -f ~/acl-token-bootstrap.json ]; then
 
   export CONSUL_HTTP_TOKEN=`cat ~/acl-token-bootstrap.json | jq -r ".SecretID"`
 

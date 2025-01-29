@@ -362,7 +362,7 @@ for node in "${NODES_ARRAY[@]}"; do
 
     md_log 'Setup a valid token to interact with Consul agent.'
 
-    _RUN_CMD -h 'export CONSUL_HTTP_TOKEN=`cat ${CONSUL_CONFIG_DIR}/agent-acl-tokens.hcl | grep agent | awk '\''{print $3}'\''| sed '\''s/"//g'\''`'
+    _RUN_CMD -h 'export CONSUL_HTTP_TOKEN=`cat ${CONSUL_CONFIG_DIR}/svc.hcl | grep token | awk '\''{print $3}'\''| sed '\''s/"//g'\''`'
 
     md_log 'Finally, start the Envoy sidecar proxy for the service.'
 

@@ -50,14 +50,10 @@ export CONSUL_DNS_PORT="53"
 if [ "${SCENARIO_CLOUD_PROVIDER}" == "docker" ]; then
   export CONSUL_DNS_PORT="53"
 
-  set -x
-
   if [ ! -z "${INSTRUQT_PARTICIPANT_ID}" ]; then
     ## This means we are in an instruqt scenario
     export GRAFANA_URL="https://operator-3001-${INSTRUQT_PARTICIPANT_ID}.env.play.instruqt.com"
   fi
-
-  set +x 
 
 elif [ "${SCENARIO_CLOUD_PROVIDER}" == "aws" ]; then
   export CONSUL_DNS_PORT="8600"

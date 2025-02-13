@@ -155,7 +155,7 @@ EOF
 _log " - Configure CLI to communicate with Consul"
 
 ## [ ] Make CONSUL_HTTP_ADDR mandatory from outside 
-export CONSUL_HTTP_ADDR="https://consul-server-0${FQDN_SUFFIX}:${CONSUL_HTTPS_PORT}"
+export CONSUL_HTTP_ADDR="https://consul-server-0:${CONSUL_HTTPS_PORT}"
 export CONSUL_HTTP_SSL=true
 export CONSUL_CACERT="${OUTPUT_FOLDER}secrets/consul-agent-ca.pem"
 export CONSUL_TLS_SERVER_NAME="server.${CONSUL_DATACENTER}.${CONSUL_DOMAIN}"
@@ -193,5 +193,5 @@ for i in `seq 0 "$((CONSUL_SERVER_NUMBER-1))"`; do
 
 done
 
-export CONSUL_HTTP_ADDR="https://consul-server-0${FQDN_SUFFIX}:${CONSUL_HTTPS_PORT}"
+export CONSUL_HTTP_ADDR="https://consul-server-0:${CONSUL_HTTPS_PORT}"
 export CONSUL_CACERT="${OUTPUT_FOLDER}secrets/consul-agent-ca.pem"

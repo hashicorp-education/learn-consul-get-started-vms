@@ -13,6 +13,7 @@ resource "local_file" "scenario_env" {
     server_number             = var.server_number,
     retry_join                = var.retry_join,
     cloud_provider            = "docker",
+    instruqt_participant_id   = var.instruqt_participant_id,
     username                  = "${var.vm_username}",
     log_level                 = var.log_level,
     enable_service_mesh       = var.enable_service_mesh,

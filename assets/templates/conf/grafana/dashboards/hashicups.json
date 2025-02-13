@@ -763,7 +763,7 @@
             "uid": "P8E80F9AEF21F6940"
           },
           "editorMode": "builder",
-          "expr": "{host=~\"hashicups-frontend|hashicups-nginx|hashicups-api|hashicups-db\"} | host  =~ `$service`",
+          "expr": "{host=~\"hashicups-frontend-0|hashicups-nginx-0|hashicups-api-0|hashicups-db-0|gateway-api-0\"} | host  =~ `$service`",
           "queryType": "range",
           "refId": "A"
         }

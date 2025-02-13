@@ -11,11 +11,11 @@ header1 "Prerequisites - Setup Bastion Host and Monitoring suite"
 
 ## Instruqt compatibility
 ## [ ] [instruqt] check if this part is still needed
-if [[ ! -z "${INSTRUQT_PARTICIPANT_ID}" ]]; then
-    FQDN_SUFFIX=".$INSTRUQT_PARTICIPANT_ID.svc.cluster.local"
-else
-    FQDN_SUFFIX=""
-fi
+# if [[ ! -z "${INSTRUQT_PARTICIPANT_ID}" ]]; then
+#     FQDN_SUFFIX=".$INSTRUQT_PARTICIPANT_ID.svc.cluster.local"
+# else
+#     FQDN_SUFFIX=""
+# fi
 
 # # ++-----------------+
 # # || Functions       |
@@ -135,6 +135,8 @@ header2 "Test SSH connectivity to VMs"
 ## on all nodes, after copying it it tests SSH to remove it.
 
 _tmp_file=`mktemp`
+
+# sleep 10
 
 ## Consul servers
 log "Test SSH for Consul server nodes"

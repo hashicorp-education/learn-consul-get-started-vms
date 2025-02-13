@@ -49,6 +49,12 @@ export CONSUL_DNS_PORT="53"
 ## [ux-diff] [cloud provider] UX differs across different Cloud providers
 if [ "${SCENARIO_CLOUD_PROVIDER}" == "docker" ]; then
   export CONSUL_DNS_PORT="53"
+
+  if [ ! -z "${INSTRUQT_PARTICIPANT_ID}" ]; then
+    ## This means we are in an instruqt scenario
+    export GRAFANA_URL="https://operator-3001-${INSTRUQT_PARTICIPANT_ID}.env.play.instruqt.com"
+  fi
+
 elif [ "${SCENARIO_CLOUD_PROVIDER}" == "aws" ]; then
   export CONSUL_DNS_PORT="8600"
 elif [ "${SCENARIO_CLOUD_PROVIDER}" == "azure" ]; then

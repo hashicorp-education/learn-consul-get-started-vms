@@ -151,7 +151,7 @@ _name_count=0
 for node in "${NODES_ARRAY[@]}"; do
 
   ### H3 .........................................................................
-  md_h3 "Start Gtafana Agent for ${NAMES_ARRAY[$_name_count]}" 
+  md_h3 "Start Grafana Agent for ${NAMES_ARRAY[$_name_count]}" 
   # ..............................................................................  
 
   _CONNECT_TO ${node}

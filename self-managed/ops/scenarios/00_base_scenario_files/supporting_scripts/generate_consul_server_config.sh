@@ -93,8 +93,12 @@ OUTPUT_FOLDER=${OUTPUT_FOLDER:-"${STEP_ASSETS}"}
 
 CONSUL_GOSSIP_KEY=${CONSUL_GOSSIP_KEY:-""}
 
+
 GRAFANA_URI=${GRAFANA_URI:-`getent hosts grafana | awk '{print $1}'`}
 PROMETHEUS_URI=${PROMETHEUS_URI:-`getent hosts mimir | awk '{print $1}'`}
+GRAFANA_PORT=${GRAFANA_PORT:-"3000"}
+
+GRAFANA_URL=${GRAFANA_URL:-"http://${GRAFANA_URI}:${GRAFANA_PORT}"}
 
 ## [debug] Check variables
 
@@ -243,8 +247,6 @@ bootstrap_expect = ${CONSUL_SERVER_NUMBER}
 
 EOF
 
-  GRAFANA_PORT=${GRAFANA_PORT:-"3000"}
-
   # "Generate server specific UI configuration"
   ## [file] [conf] agent-server-specific-ui.hcl
   _log " - Generate agent-server-specific-ui.hcl - server specific UI configuration"
@@ -260,7 +262,8 @@ ui_config {
   enabled = true
 
   dashboard_url_templates {
-    service = "http://${GRAFANA_URI}:${GRAFANA_PORT}/d/hashicups/hashicups?orgId=1&var-service={{Service.Name}}"
+    # service = "http://${GRAFANA_URI}:${GRAFANA_PORT}/d/hashicups/hashicups?orgId=1&var-service={{Service.Name}}"
+    service = "${GRAFANA_URL}/d/hashicups/hashicups?orgId=1&var-service={{Service.Name}}"
   }
 
   metrics_provider = "prometheus"

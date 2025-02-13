@@ -11,6 +11,13 @@ variable "vm_username" {
   default = "admin"
 }
 
+#------------------------------------------------------------------------------#
+## Instruqt Participant ID
+#------------------------------------------------------------------------------#
+# Only populated in instruqt scenarios or if TF_VAR_instruqt_participant_id is set.
+variable instruqt_participant_id {
+  default = ""
+}
 
 #------------------------------------------------------------------------------#
 ## Consul tuning

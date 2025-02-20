@@ -54,7 +54,7 @@ md_log "This is a solution runbook for the scenario deployed."
 md_h2 "Prerequisites"
 # ------------------------------------------------------------------------------
 
-md_log "Login to the bastion host using ssh."
+md_log "Log into the bastion host using ssh."
 
 ## [ux-diff] [cloud provider] UX differs across different Cloud providers 
 if [ "${SCENARIO_CLOUD_PROVIDER}" == "docker" ]; then
@@ -91,7 +91,7 @@ terminal and generate the required configuration files."
 
 _RUN_CMD -c 'ls -1 ~/assets/scenario/env*.env'
 
-md_log "Import the two files in your environment."
+md_log "Source the files to set the variables in the terminal session."
 
 _RUN_CMD -h 'source ~/assets/scenario/env-scenario.env; \
 source ~/assets/scenario/env-consul.env'
@@ -179,7 +179,7 @@ for node in "${NODES_ARRAY[@]}"; do
 
     # popd
 
-    md_log "To complete Consul agent configuration, you need to setup tokens 
+    md_log "To complete Consul agent configuration, you need to set up tokens 
 for the client. For this tutorial, you are using the bootstrap token. 
 We recommend you to create more restrictive tokens for the client agents in production."
 
@@ -244,7 +244,7 @@ for node in "${NODES_ARRAY[@]}"; do
       # ._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
     fi
 
-    md_log "Login to the ${NAMES_ARRAY[$_name_count]} VM from the bastion host."
+    md_log "Log into the ${NAMES_ARRAY[$_name_count]} VM from the bastion host."
 
     _CONNECT_TO ${NODE_NAME}
 

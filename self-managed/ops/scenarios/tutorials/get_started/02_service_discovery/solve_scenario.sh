@@ -42,7 +42,7 @@ md_h2 "Prerequisites"
 md_h3 "Login into the bastion host VM" 
 # ..............................................................................  
 
-md_log "Login to the bastion host using ssh"
+md_log "Log into the bastion host using ssh"
 
 ## [ux-diff] [cloud provider] UX differs across different Cloud providers 
 if [ "${SCENARIO_CLOUD_PROVIDER}" == "docker" ]; then
@@ -104,7 +104,7 @@ terminal and generate the required configuration files."
 
 _RUN_CMD -c 'ls -1 ~/assets/scenario/env*.env'
 
-md_log "Import the two files in your environment."
+md_log "Source the files to set the variables in the terminal session."
 
 _RUN_CMD -h 'source ~/assets/scenario/env-scenario.env; \
 source ~/assets/scenario/env-consul.env'

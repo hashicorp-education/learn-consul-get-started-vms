@@ -38,7 +38,7 @@ md_log "This is a solution runbook for the scenario deployed."
 md_h2 "Prerequisites"
 # ------------------------------------------------------------------------------
 
-md_log "Login to the bastion host using ssh."
+md_log "Log into the bastion host using ssh."
 
 ## [ux-diff] [cloud provider] UX differs across different Cloud providers 
 if [ "${SCENARIO_CLOUD_PROVIDER}" == "docker" ]; then

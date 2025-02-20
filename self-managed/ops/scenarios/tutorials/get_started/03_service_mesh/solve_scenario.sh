@@ -42,7 +42,7 @@ md_h2 "Prerequisites"
 md_h3 "Login into the bastion host VM" 
 # ..............................................................................  
 
-md_log "Login to the bastion host using ssh"
+md_log "Log into the bastion host using ssh"
 
 ## [ux-diff] [cloud provider] UX differs across different Cloud providers 
 if [ "${SCENARIO_CLOUD_PROVIDER}" == "docker" ]; then
@@ -80,7 +80,7 @@ terminal and generate the required configuration files."
 
 _RUN_CMD -c 'ls -1 ~/assets/scenario/env*.env'
 
-md_log "Import the two files in your environment."
+md_log "Source the files to set the variables in the terminal session."
 
 _RUN_CMD -h 'source ~/assets/scenario/env-scenario.env; \
 source ~/assets/scenario/env-consul.env'
@@ -145,7 +145,7 @@ for i in `seq ${api_gw_NUMBER}`; do
     ## [cmd] [script] generate_consul_client_config.sh
     _RUN_CMD -c "~/ops/scenarios/00_base_scenario_files/supporting_scripts/generate_consul_client_config.sh"
 
-    md_log 'To complete Consul agent configuration, you need to setup tokens for 
+    md_log 'To complete Consul agent configuration, you need to set up tokens for 
 the client. For this tutorial, you are using the bootstrap token. We recommend 
 using more restrictive tokens for your Consul client agents in production.'
 
@@ -205,7 +205,7 @@ for i in `seq ${api_gw_NUMBER}`; do
       # ._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
     fi
 
-  md_log "Login to the API Gateway VM from the bastion host."
+  md_log "Log into the API Gateway VM from the bastion host."
 
   _CONNECT_TO ${NODE_NAME}
 
@@ -467,7 +467,7 @@ for i in `seq ${api_gw_NUMBER}`; do
       # ._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
     fi
 
-  md_log "Login to the API Gateway VM from the bastion host."
+  md_log "Log into the API Gateway VM from the bastion host."
 
   _CONNECT_TO ${NODE_NAME}
 

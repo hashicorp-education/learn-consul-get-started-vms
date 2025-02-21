@@ -143,7 +143,7 @@ EOT
     log "Starting monitoring suite on Bastion Host"
     bash "${SCENARIO_OUTPUT_FOLDER}start_monitoring_suite.sh"
 
-    log_err "BASTION IP ADDR: $GRAFANA_URI"
+    log_warn "GRAFANA IP ADDR: $GRAFANA_URI"
 
   else 
     log_err "Cloud provider $SCENARIO_CLOUD_PROVIDER is unsupported...exiting."

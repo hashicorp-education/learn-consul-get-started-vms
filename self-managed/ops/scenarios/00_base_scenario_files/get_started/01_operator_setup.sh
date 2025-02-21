@@ -74,6 +74,22 @@ if [ "${ENABLE_MONITORING}" == "true" ]; then
     export GRAFANA_URI=$(curl -s http://instance-data/latest/meta-data/public-ipv4)
     export LOKI_URI=$(curl -s http://instance-data/latest/meta-data/local-ipv4)
     
+    ## Fallback in case the API does not work
+    if [ -z "${GRAFANA_URI}" ]; then
+      
+      log_warn "AWS API not working for public IP. Fallback to external service."
+      export GRAFANA_URI=$(curl -s ifconfig.me)
+
+    fi
+
+    ## Errors in case the fallback method does not work.
+    if [ -z "${GRAFANA_URI}" ]; then
+
+      log_err "Fallback not working. Grafana dashboard might not work properly."
+      export GRAFANA_URI="grafana"
+
+    fi
+
     log "Configuring DNS for monitoring suite"
     
     # sudo cat <<EOT >> /etc/hosts
@@ -98,6 +114,22 @@ elif [ "${SCENARIO_CLOUD_PROVIDER}" == "azure" ]; then
     export GRAFANA_URI=$(curl -s -H Metadata:true --noproxy "*" http://169.254.169.254/metadata/instance/network/interface/0/ipv4/ipAddress/0?api-version=2021-12-13 | jq -r '.["publicIpAddress"]')
     export LOKI_URI=$(curl -s -H Metadata:true --noproxy "*" http://169.254.169.254/metadata/instance/network/interface/0/ipv4/ipAddress/0?api-version=2021-12-13 | jq -r '.["privateIpAddress"]')
     
+    ## Fallback in case the API does not work
+    if [ -z "${GRAFANA_URI}" ]; then
+
+      log_warn "Azure API not working for public IP. Fallback to external service."
+      export GRAFANA_URI=$(curl -s ifconfig.me)
+
+    fi
+
+    ## Errors in case the fallback method does not work.
+    if [ -z "${GRAFANA_URI}" ]; then
+
+      log_err "Fallback not working. Grafana dashboard might not work properly."
+      export GRAFANA_URI="127.0.0.1"
+
+    fi
+
     log "Configuring DNS for monitoring suite"
     
     # sudo cat <<EOT >> /etc/hosts

@@ -25,12 +25,13 @@ resource "aws_instance" "consul_server" {
     ssh_public_key  = base64gzip("${tls_private_key.keypair_private_key.public_key_openssh}"),
     ssh_private_key = base64gzip("${tls_private_key.keypair_private_key.private_key_openssh}"),
     hostname        = "consul-server-${count.index}",
+    username        = "${var.vm_username}",
     consul_version  = "${var.consul_version}"
   })
 
   connection {
     type        = "ssh"
-    user        = "admin"
+    user        = "${var.vm_username}"
     private_key = tls_private_key.keypair_private_key.private_key_pem
     host        = self.public_ip
   }

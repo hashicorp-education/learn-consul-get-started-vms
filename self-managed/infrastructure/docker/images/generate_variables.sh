@@ -20,23 +20,47 @@ function get_envoy_version() {
     ## 04 Select only the version numbers (Pattern "x.y.x,")
     ## 05 Select only the first value
 
-    ENVOY_VER=`wget https://www.consul.io/docs/connect/proxies/envoy -q -O - | \
-        grep -oP "<table>.*?</table>" | \
-        grep "Compatible Envoy Versions" | \
-        grep -oP "<tr><td>${CONSUL_VER}</td>.*?</tr>" | \
-        grep -oP "\d+\.\d+.\d+," | \
-        sed 's/,//g' | \
-        head -1`
+    # ENVOY_VER=`wget https://www.consul.io/docs/connect/proxies/envoy -q -O - | \
+    #     grep -oP "<table>.*?</table>" | \
+    #     grep "Compatible Envoy Versions" | \
+    #     grep -oP "<tr><td>${CONSUL_VER}</td>.*?</tr>" | \
+    #     grep -oP "\d+\.\d+.\d+," | \
+    #     sed 's/,//g' | \
+    #     head -1`
     
+    ## Logic
+    ## 00 Download the page source
+    ## 01 Select rows containing the referenced Consul version
+    ## 02 Select only the first row
+    ## 03 Select only Envoy version numbers
+    ## 04 Select only the first row
+    ## 05 Remove trailing comma
+
+    ENVOY_VER=`curl -s https://raw.githubusercontent.com/hashicorp/consul/main/website/content/docs/connect/proxies/envoy.mdx | \
+    grep --color=never -P "${CONSUL_VER}\sCE" | \
+    head -1 | \
+    grep -Po "[0-9\.]+x," | \
+    head -1 | \
+    sed 's/,//'`
+
     echo ${ENVOY_VER}
 }
 
 function get_latest_consul_version() {
 
-	CHECKPOINT_URL="https://checkpoint-api.hashicorp.com/v1/check"
-    if [ -z "$1" ] || [ "$1" == "latest" ] ; then
-        CONSUL_VER=$(curl -s "${CHECKPOINT_URL}"/consul | jq .current_version | tr -d '"')
-    fi
+    ## Checkpoint URL now only shows latest TLS
+	# CHECKPOINT_URL="https://checkpoint-api.hashicorp.com/v1/check"
+    # if [ -z "$1" ] || [ "$1" == "latest" ] ; then
+    #     CONSUL_VER=$(curl -s "${CHECKPOINT_URL}"/consul | jq .current_version | tr -d '"')
+    # fi
+
+    CONSUL_VER=`curl -s https://releases.hashicorp.com/consul/ | \
+                    grep "</a>" | \
+                    grep -v "-ent" | \
+                    grep -v "-" | \
+                    grep -v "\.\." | \
+                    head -1 | \
+                    sed 's/^[^>]*>consul_//g' | sed 's/<.*//g'`
 
 	echo "${CONSUL_VER}"
 }
@@ -60,7 +84,7 @@ function get_latest_app_version() {
 
 ## DOCKER Variables
 ## Sets up a mock Docker repo, images will be built locally
-DOCKER_REPOSITORY="learn-consul"
+DOCKER_REPOSITORY="learn-consul-vms"
 DOCKER_BASE_IMAGE="base-image"
 DOCKER_BASE_CONSUL="base-consul"
 
@@ -72,8 +96,14 @@ DOCKER_BASE_CONSUL="base-consul"
 ## The script is intended to produce Docker images for the latest available 
 ## Consul version, with the latest compatible Envoy version.
 ## [warn] This might only work with GNU version of sed and grep.
+
 LAST_CONSUL_VERSION=`get_latest_consul_version`
 LAST_COMPATIBLE_ENVOY_VERSION=`get_envoy_version ${LAST_CONSUL_VERSION}`
+
+if [ -z "${LAST_COMPATIBLE_ENVOY_VERSION}" ]; then
+    echo "ERROR: Could not find a valid Envoy version to intall. Exiting."
+    exit 1
+fi
 
 ## [core] [flow] tune here to chenge HashiCups Configuration
 ## HashiCups
@@ -104,3 +134,5 @@ echo "DOCKER_BASE_CONSUL=${DOCKER_BASE_CONSUL}"             >> ${OUTPUT_FILE}
 echo "HC_API_PAYMENTS_VERSION=${HC_API_PAYMENTS_VERSION}"   >> ${OUTPUT_FILE}
 echo "HC_API_PRODUCT_VERSION=${HC_API_PRODUCT_VERSION}"     >> ${OUTPUT_FILE}
 echo "HC_API_PUBLIC_VERSION=${HC_API_PUBLIC_VERSION}"       >> ${OUTPUT_FILE}
+
+cat ${OUTPUT_FILE}

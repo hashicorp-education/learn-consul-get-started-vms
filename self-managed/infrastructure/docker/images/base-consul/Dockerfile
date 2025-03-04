@@ -9,6 +9,7 @@ ARG BASE_IMAGE
 FROM hashicorp/consul:${CONSUL_VERSION} as consul-bin
 FROM envoyproxy/envoy:${ENVOY_VERSION} as envoy-bin
 FROM grafana/agent:latest as grafana-agent-bin
+FROM hashicorp/consul-template:latest as consul-template-bin
 
 FROM ${BASE_IMAGE}
 
@@ -19,8 +20,10 @@ FROM ${BASE_IMAGE}
 COPY --from=grafana-agent-bin /usr/bin/grafana-agent /usr/bin/grafana-agent
 COPY --from=envoy-bin /usr/local/bin/envoy /usr/bin/envoy
 COPY --from=consul-bin /bin/consul /usr/bin/consul
+COPY --from=consul-template-bin /bin/consul-template /usr/bin/consul-template
 
 RUN chown -R 1000:1000 /usr/bin/consul
+RUN chown -R 1000:1000 /usr/bin/consul-template
 RUN chown -R 1000:1000 /usr/bin/envoy
 RUN chown -R 1000:1000 /usr/bin/grafana-agent
 

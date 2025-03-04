@@ -46,8 +46,13 @@ RUN mkdir -p "$PGDATA" && \
 # | ENTRYPOINT    | #
 # ----------------- #
 
-COPY start_database.sh /home/admin/start_service.sh
+# COPY start_database.sh /home/admin/start_service_old.sh
+# RUN  chown -R 1000:1000 /home/admin/start_service_old.sh && chmod +x /home/admin/start_service_old.sh
+COPY hc_database.sh /home/admin/start_service.sh
 RUN  chown -R 1000:1000 /home/admin/start_service.sh && chmod +x /home/admin/start_service.sh
+
+COPY hc_database.sh /home/admin/hc_service.sh
+RUN  chown -R 1000:1000 /home/admin/hc_service.sh && chmod +x /home/admin/hc_service.sh
 
 STOPSIGNAL SIGINT
 

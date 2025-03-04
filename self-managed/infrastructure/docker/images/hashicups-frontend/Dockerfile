@@ -40,8 +40,13 @@ COPY --from=application /app/package.json ./package.json
 RUN chown -R 1000:1000 /app
 
 # COPY --from=application /app/entrypoint.sh ./entrypoint.sh
-COPY start_frontend.sh /home/admin/start_service.sh
+# COPY start_frontend.sh /home/admin/start_service_old.sh
+# RUN  chown -R 1000:1000 /home/admin/start_service_old.sh && chmod +x /home/admin/start_service_old.sh
+COPY hc_frontend.sh /home/admin/start_service.sh
 RUN  chown -R 1000:1000 /home/admin/start_service.sh && chmod +x /home/admin/start_service.sh
+
+COPY hc_frontend.sh /home/admin/hc_service.sh
+RUN  chown -R 1000:1000 /home/admin/hc_service.sh && chmod +x /home/admin/hc_service.sh
 
 # ----------------- #
 # | ENTRYPOINT    | #

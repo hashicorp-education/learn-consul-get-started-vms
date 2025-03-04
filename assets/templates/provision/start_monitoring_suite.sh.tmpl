@@ -5,16 +5,16 @@ LOKI_PARAMS=""
 LOKI_COMMAND="-config.file=/etc/loki/local-config.yaml -server.grpc-listen-port 9007"
 
 GRAFANA_IMAGE="grafana/grafana:latest"
-GRAFANA_PARAMS="--volume=/home/admin/assets/templates/conf/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources \
-                --volume=/home/admin/assets/templates/conf/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards \
-                --volume=/home/admin/assets/templates/conf/grafana/dashboards:/var/lib/grafana/dashboards \
+GRAFANA_PARAMS="--volume=/home/${username}/assets/templates/conf/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources \
+                --volume=/home/${username}/assets/templates/conf/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards \
+                --volume=/home/${username}/assets/templates/conf/grafana/dashboards:/var/lib/grafana/dashboards \
                 -e GF_AUTH_ANONYMOUS_ENABLED=true \
                 -e GF_AUTH_ANONYMOUS_ORG_ROLE=Admin \
                 -e GF_AUTH_DISABLE_LOGIN_FORM=true"
 GRAFANA_COMMAND=""
 
 MIMIR_IMAGE="grafana/mimir:latest"
-MIMIR_PARAMS="--volume=/home/admin/assets/templates/conf/mimir/mimir.yaml:/etc/mimir/mimir.yaml"
+MIMIR_PARAMS="--volume=/home/${username}/assets/templates/conf/mimir/mimir.yaml:/etc/mimir/mimir.yaml"
 MIMIR_COMMAND="--config.file=/etc/mimir/mimir.yaml"
 
 ## Remove pre-existing instances

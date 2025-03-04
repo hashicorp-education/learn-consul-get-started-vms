@@ -1,8 +1,18 @@
+#------------------------------------------------------------------------------#
+## Cloud Auto Join
+#------------------------------------------------------------------------------#
+
 # Declare TF variables
 resource "random_string" "suffix" {
   length  = 4
   special = false
   upper   = false
+}
+
+## Flow Control
+variable "prefix" {
+  description = "The prefix used for all resources in this plan"
+  default     = "learn-consul-vms"
 }
 
 locals {
@@ -13,15 +23,23 @@ locals {
   retry_join = "provider=aws tag_key=ConsulJoinTag tag_value=auto-join-${random_string.suffix.result}"
 }
 
-## Flow Control
-variable "prefix" {
-  description = "The prefix used for all resources in this plan"
-  default     = "learn-consul-vms"
-}
-
+#------------------------------------------------------------------------------#
 ## AWS networking
+#------------------------------------------------------------------------------#
+
 variable "vpc_region" {
   default = "us-west-2"
+}
+
+#------------------------------------------------------------------------------#
+## Admin Username
+#------------------------------------------------------------------------------#
+## Azure does not permit to have `admin` username but AWS has `admin` username as default.
+## To resolve this in the generic scenarios, we define a variable that contains the username 
+## so that all the scripts can be generated parametrically from it.
+
+variable "vm_username" {
+  default = "admin"
 }
 
 #------------------------------------------------------------------------------#
@@ -51,50 +69,37 @@ variable "server_number" {
   default     = "1"
 }
 
-# variable "retry_join" {
-#   description = "Used by Consul to automatically join other nodes."
-#   type        = string
-#   default     = "provider=aws tag_key=ConsulJoinTag tag_value=auto-join"
-# }
-
 #------------------------------------------------------------------------------#
 ## Consul Flow
 #------------------------------------------------------------------------------#
 
-variable "autostart_control_plane" {
-  description = "If set to true, starts Consul servers automatically"
-  type        = bool
-  default     = false
+variable "enable_service_mesh" {
+  description = "If set to true configures services for service mesh, otherwise for service discovery"
+  default = true
 }
 
-variable "autostart_data_plane" {
-  description = "If set to true, starts Consul clients automatically"
-  type        = bool
-  default     = false
+#------------------------------------------------------------------------------#
+## Consul datacenter Tuning
+#------------------------------------------------------------------------------#
+
+variable "api_gw_number" {
+  description = "Number of instances for Consul API Gateways"
+  default     = "1"
 }
 
-variable "auto_acl_bootstrap" {
-  description = "If set to true, creates server config with pre-set bootstrap token"
-  type        = bool
-  default     = false
+variable "term_gw_number" {
+  description = "Number of instances for Consul Terminating Gateways"
+  default     = "0"
 }
 
-variable "auto_acl_clients" {
-  description = "If set to true, creates client tokens automatically."
-  type        = bool
-  default     = false
+variable "mesh_gw_number" {
+  description = "Number of instances for Consul Mesh Gateways"
+  default     = "0"
 }
 
-variable "config_services_for_mesh" {
-  description = "If set to true, it will use mesh configuration for Consul services"
-  type        = bool
-  default     = false
-}
-
-variable "start_monitoring_client" {
-  description = "If set to true, it will use mesh configuration for Consul services"
-  type        = bool
-  default     = false
+variable "consul_esm_number" {
+  description = "Number of instances for Consul ESM nodes"
+  default     = "0"
 }
 
 #------------------------------------------------------------------------------#
@@ -126,13 +131,57 @@ variable "fe_version" {
   default     = "v1.0.9"
 }
 
+variable "hc_db_number" {
+  description = "Number of instances for HashiCups DB service"
+  default     = "1"
+}
+
+variable "hc_api_number" {
+  description = "Number of instances for HashiCups API service"
+  default     = "1"
+}
+
+variable "hc_fe_number" {
+  description = "Number of instances for HashiCups Frontend service"
+  default     = "1"
+}
+
+variable "hc_lb_number" {
+  description = "Number of instances for HashiCups NGINX service"
+  default     = "1"
+}
+
+#------------------------------------------------------------------------------#
+## Monitoring Tuning
+#------------------------------------------------------------------------------#
+
+variable "start_monitoring_suite" {
+  description = "If true starts monitoring suite on the Bastion host"
+  default     = "false"
+}
+
+variable "register_monitoring_suite" {
+  description = "Register monitoring suite nodes as external services in Consul"
+  default     = "false"
+}
+
 #------------------------------------------------------------------------------#
 ## Scenario tuning
 #------------------------------------------------------------------------------#
 
+variable "base_scenario" {
+  description = "Base scenario that represents the starting point of the infrastructure"
+  default     = "base_consul_dc"
+}
+
 variable "scenario" {
   description = "Prerequisites scenario to run at the end of infrastructure provision"
-  default     = "00_base"
+  default     = "00_test_base"
+}
+
+variable "solve_scenario" {
+  description = "If a solution script is provided, tests the solution against the scenario."
+  default     = "false"
 }
 
 variable "log_level" {

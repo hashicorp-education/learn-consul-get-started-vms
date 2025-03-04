@@ -168,9 +168,12 @@ else
       SSH_CERT="../infrastructure/docker/images/base/certs/id_rsa"
 
     elif [ "${SCENARIO_CLOUD_PROVIDER}" == "aws" ]; then
-    ## [ ] [test] check if still works in AWS
     
       SSH_CERT="../infrastructure/aws/certs/id_rsa.pem"
+
+    elif [ "${SCENARIO_CLOUD_PROVIDER}" == "azure" ]; then
+    
+      SSH_CERT="../infrastructure/azure/certs/id_rsa.pem"
 
     else 
       log_err "Cloud provider $SCENARIO_CLOUD_PROVIDER is unsupported...exiting."
@@ -203,31 +206,10 @@ PREREQUISITES="docker,wget,jq,grep,sed,tail,awk"
 
 ## Flow control
 ## Check parameters
-if   [ "$1" == "clean" ]; then
-  #  todo Clean environment. This should be executed before applying
-  # a scenario (it would be nice to have idempotent scenarios apply)
-
-  ## Removing previous run scripts
-  rm -rf ${SCENARIO_OUTPUT_FOLDER}scripts 
-
-  exit 0
-elif [ "$1" == "infra" ]; then
-  ########## ------------------------------------------------
-  header2     "DEPLOY SCENARIO INFRASTRUCTURE"
-  ###### -----------------------------------------------
-  ## [feat] Deploy infrastructure directly from the script
-  ##  todo Spins up infrastructure for scenario. 
-  ## Infrastructure files are located at ../infrastructure.
-  ## ## Uses functions defined at ${SCENARIOS}/20_infrasteructure_functions.env
-  
-  ## Removing previous run scripts
-  rm -rf ${SCENARIO_OUTPUT_FOLDER}scripts 
-
-  exit 0
-elif [ "$1" == "operate" ]; then
+if   [ "$1" == "operate" ]; then
   ########## ------------------------------------------------
   header2     "OPERATE SCENARIO"
-  log "Operating scenario $2"
+  log "Scenario: $2"
   ###### -----------------------------------------------
   ## Generates scenario operate file and runs it on bastion host. 
   ## Scenario file is composed from the scenario folder and is going to be 
@@ -244,101 +226,23 @@ elif [ "$1" == "operate" ]; then
 
   ## Generate operate.sh script
   operate_dry "$2"
-  ## Execute operate.sh script
-  execute_scenario_step "operate"
-
-elif [ "$1" == "solve" ]; then
-  ########## ------------------------------------------------
-  header2     "SOLVE SCENARIO"
-  log "Solving scenario $2"
-  ###### -----------------------------------------------
-  ## [info] Generates scenario solution file and runs it on bastion host. 
-  ## Scenario file is composed from the scenario folder and is going to be 
-  ## located at ${SCENARIO_OUTPUT_FOLDER}scripts/solve.sh
-  ## Uses functions defined at ${SCENARIOS}/10_scenario_functions.env
 
   ## Generate solve.sh script
   solve_dry "$2"
 
-  execute_scenario_step "solve"
+  ## Copy solve.sh on Bastion Host
+  execute_scenario_step -copy "solve"
 
-  exit 0
-elif [ "$1" == "check" ]; then
-  ########## ------------------------------------------------
-  header2     "CHECK SCENARIO"
-  ###### -----------------------------------------------
-  ##  [info] Generates scenario check file and runs it on bastion host. 
-  ## Scenario file is composed from the scenario folder and is going to be 
-  ## located at ${SCENARIO_OUTPUT_FOLDER}scripts/check.sh
-  ## Uses functions defined at ${SCENARIOS}/10_scenario_functions.env
+  ## Generate validate.sh script
+  validate_dry "$2"
 
-  ## Generate test.sh script
-  test_dry "$2"
+  ## Copy validate.sh on Bastion Host
+  execute_scenario_step -copy "validate"
 
-  execute_scenario_step "test"
+  ## Copy operate.sh script on Bastion Host
+  ## Copy supporting scripts on Bastion Host
+  ## Execute operate.sh script
+  execute_scenario_step "operate"
 
-  exit 0
-
-elif [ "$1" == "gs_check" ]; then
-
-  base_scenarios_check
-  exit 0
-
-elif [ "$1" == "scenario_diff" ]; then
-
-  scenarios_diff $2 $3
-  exit 0
-
-elif [ "$1" == "propagate" ]; then
-
-  log_info "Propagate scenario $2"
-
-  LOG_LEVEL=0
-
-  propagate_scenario_up "$2" 
-  exit 0
-
-elif [ "$1" == "test_logs" ]; then
-
-  test_logs
-  exit 0
-elif [ "$1" == "list_scenarios" ]; then
-  header2 List Avaiable Scenarios
-  for i in `_print_available_scenarios | grep "available scenarios:" | grep -oP "\s[^:]*$"`; do
-    echo "${i:0:2}  -  $i"
-  done
-  exit 0
-elif [ "$1" == "generate_operate_files" ]; then
-  SCENARIO_OUTPUT_FOLDER="../infrastructure/instruqt/"
-
-  if [ -d "${SCENARIO_OUTPUT_FOLDER}" ]; then
-    if [ -f "${SCENARIO_OUTPUT_FOLDER}setup-bastion" ]; then
-      for j in `seq -f0%g 00 05`; do
-        operate_dry $j
-        if [ -f "${SCENARIO_OUTPUT_FOLDER}scripts/operate.sh" ]; then
-          cat "${SCENARIO_OUTPUT_FOLDER}setup-bastion" > ${SCENARIO_OUTPUT_FOLDER}setup-bastion-$j
-          cat "${SCENARIO_OUTPUT_FOLDER}scripts/operate.sh" >> ${SCENARIO_OUTPUT_FOLDER}setup-bastion-$j
-          echo "exit 0" >> ${SCENARIO_OUTPUT_FOLDER}setup-bastion-$j 
-          rm -f ${SCENARIO_OUTPUT_FOLDER}scripts/operate.sh 
-        fi
-      done
-    fi
-  fi
-
-  exit 0
 fi
 
-
-## Clean environment
-# log "Cleaning Environment"
-# clean_env
-
-########## ------------------------------------------------
-header1     "PROVISIONING PREREQUISITES"
-###### -----------------------------------------------
-
-## Checking Prerequisites
-log "Checking prerequisites..."
-for i in `echo ${PREREQUISITES} | sed 's/,/ /g'` ; do
-  prerequisite_check $i
-done

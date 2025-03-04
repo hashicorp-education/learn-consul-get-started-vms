@@ -1,27 +1,209 @@
 #!/usr/bin/env bash
 
-## Remove pre-existing instances
-docker rm -f hashicups-api-payments hashicups-api-product hashicups-api-public
-sudo rm -rf /home/admin/conf.json
+## Service file to start HashiCups services in the different VM based scenarios.
+## For production environments it is recommended to use systemd service files, 
+## this file is more complex than needed in order to take into account all possible
+## situation an HashiCups service might get started in the different use-cases.
 
-if [ "$${1}" == local ]; then
-  # Start Application on localhost
-  NETWORK_PAY="--publish 127.0.0.1:8080:8080"
-  NETWORK_PRO="--network host"
-  NETWORK_PUB="--network host"
-  BIND_PRO="127.0.0.1"
-  BIND_PUB="127.0.0.1"
-  DB="127.0.0.1"
-  PROD="127.0.0.1"
-  PAY="127.0.0.1"
+## Possible uses:
+## -----------------------------------------------------------------------------
+## service.sh                       -   [Compatibility mode] Starts the service on all available interfaces  
+## service.sh local                 -   [Compatibility mode] Starts the service on localhost interface
+## service.sh start                 -   Starts the service using hostnames for upstream services
+## service.sh start --local         -   Starts the service on localhost interface
+## service.sh start --hostname      -   Starts the service using hostnames for upstream services
+## service.sh start --consul        -   Starts the service using Consul service name for upstream services (using LB functionality)
+## service.sh start --consul-node   -   Starts the service using Consul node name for upstream services
+## service.sh stop                  -   Stops the service
+## service.sh reload                -   Reload the service without changing the configuration files
+## service.sh reload --local        -   Reload the service without changing the configuration files. If variables need to be set, are set on localhost.
+
+echo '# ------------------------------------ #'
+echo '|        HashiCups API service         |'
+echo '# ------------------------------------ #'
+
+
+## ----------
+## Variables
+## -----------------------------------------------------------------------------
+
+## If set to true the service is started locally
+SERVICE_MESH=false
+## If set to false the service is re-started with the same configuration.
+REGEN_CONFIG=true
+
+## Consul Node upstream
+CONSUL_NODE=false
+## Consul Service upstream
+CONSUL_SERVICE=false
+## DNS Lookup to use to compose the FQDN for the services
+DNS_LOOKUP=""
+
+_BIND_ADDR=""
+_DB_ADDR="${DB_HOST}"
+
+# _DATABASE_ADDRESS="hashicups-db-0"
+
+
+## ----------
+## Stop pre-existing instances.
+## -----------------------------------------------------------------------------
+echo "Stop pre-existing instances."
+
+docker rm -f hashicups-api-payments hashicups-api-product hashicups-api-public
+
+## -----------------------------------------------------------------------------
+
+## ----------
+## Check script command
+## -----------------------------------------------------------------------------
+case "$${1}" in
+    "")
+        echo "EMPTY - Start services on all interfaces."
+        # BIND_ADDRESS=""
+        _DATABASE_ADDRESS="$${_DB_ADDR}"
+        ;;
+    "local")
+        echo "LOCAL - Start services on local interface."
+        SERVICE_MESH=true
+        _BIND_ADDR="localhost"
+        _DATABASE_ADDRESS="localhost"
+        ;;
+    "start")
+        echo "START - Start services on all interfaces."
+        case "$${2}" in
+        ""|"--hostname")
+            echo "START - Start services on all interfaces using hostnames for upstream services."
+            _BIND_ADDR=""
+            _DATABASE_ADDRESS="$${_DB_ADDR}"
+            ;;
+        "--local")
+            echo "START LOCAL - Start services on local interface."
+            SERVICE_MESH=true
+            _BIND_ADDR="localhost"
+            _DATABASE_ADDRESS="localhost"
+            ;;
+        "--consul")
+            echo "START CONSUL - Starts the service using Consul service name for upstream services (using LB functionality)."
+            _BIND_ADDR=""
+            _DATABASE_ADDRESS="hashicups-db"
+            CONSUL_SERVICE=true
+            DNS_LOOKUP="service"
+            ;;
+        "--consul-node")
+            echo "START CONSUL - Starts the service using Consul node name for upstream services."
+            _BIND_ADDR=""
+            _DATABASE_ADDRESS="hashicups-db-0"
+            CONSUL_NODE=true
+            DNS_LOOKUP="node"
+            ;;
+        *) echo "$${0} $${1}: error - unrecognized option $${2}" 1>&2; exit 2;;
+        esac 
+        ;;
+    "stop")
+        echo "Service instance stopped." 
+        exit 0
+        ;;
+    "reload")
+        echo "RELOAD - Start services on all interfaces."
+        case "$${2}" in
+            "")
+                echo "RELOAD - Reload the service without changing the configuration files"
+                REGEN_CONFIG=false
+                # _BIND_ADDR=""
+                # _DATABASE_ADDRESS="hashicups-db-0"
+                ;;
+            "--local")
+                echo "RELOAD LOCAL - Reload the service without changing the configuration files. If variables need to be set, are set on localhost."
+                SERVICE_MESH=true
+                REGEN_CONFIG=false
+                _BIND_ADDR="localhost"
+                _DATABASE_ADDRESS="localhost"
+                ;;
+        
+            *) echo "$${0} $${1}: error - unrecognized option $${2}" 1>&2; exit 2;;
+        esac
+        ;;
+    *) echo "$${0} $${1}: error - unrecognized option $${2}" 1>&2; exit 2;;
+esac
+
+## -----------------------------------------------------------------------------
+
+## ----------
+## Start instances.
+## -----------------------------------------------------------------------------
+
+echo "Start service instance."
+
+# export BIND_ADDRESS=$${_BIND_ADDR}:8081
+
+if [ "$${SERVICE_MESH}" == true ]; then
+    echo "Service started on local insteface"
+
+    NETWORK_PAY="--publish 127.0.0.1:8080:8080"
+    NETWORK_PRO="--network host"
+    NETWORK_PUB="--network host"
+    BIND_PRO="127.0.0.1"
+    BIND_PUB="127.0.0.1"
+    DB="127.0.0.1"
+    PROD="127.0.0.1"
+    PAY="127.0.0.1"
+    
+    ## Configure Product API
+    tee /home/${username}/conf.json << EOF
+{
+	"db_connection": "host=localhost port=5432 user=hashicups password=hashicups_pwd dbname=products sslmode=disable",
+	"bind_address": "localhost:9090",
+	"metrics_address": "localhost:9103"
+}
+EOF
+
 else
-  NETWORK_PAY="--network host"
-  NETWORK_PRO="--network host"
-  NETWORK_PUB="--network host"
-  DB="${DB_HOST}"
-  PROD="${PRODUCT_API_HOST}"
-  PAY="${PAYMENT_API_HOST}"
+    echo "Service started to listen on all available interfaces."
+
+    NETWORK_PAY="--network host"
+    NETWORK_PRO="--network host"
+    NETWORK_PUB="--network host"
+    DB="${DB_HOST}"
+    PROD="${PRODUCT_API_HOST}"
+    PAY="${PAYMENT_API_HOST}"
+
+    if [ "$${REGEN_CONFIG}" == true ]; then
+
+        sudo rm -rf /home/${username}/conf.json
+
+        if [ "$${CONSUL_NODE}" == true ] || [ "$${CONSUL_SERVICE}" == true ]; then
+
+            _DC=`cat /etc/consul.d/consul.hcl | grep datacenter | awk '{print $3}' | sed 's/"//g'`
+            _DOMAIN=`cat /etc/consul.d/consul.hcl | grep domain | awk '{print $3}' | sed 's/"//g'`
+
+            if [ "$${_DC}" == "" ]; then _DC="dc1"; fi
+            if [ "$${_DOMAIN}" == "" ]; then _DOMAIN="consul"; fi
+
+            ## Configure Product API
+            tee /home/${username}/conf.json << EOF
+{
+	"db_connection": "host=$${_DATABASE_ADDRESS}.$${DNS_LOOKUP}.$${_DC}.$${_DOMAIN} port=5432 user=hashicups password=hashicups_pwd dbname=products sslmode=disable",
+	"bind_address": ":9090",
+	"metrics_address": ":9103"
+}
+EOF
+        else
+            ## Configure Product API
+            tee /home/${username}/conf.json << EOF
+{
+	"db_connection": "host=$${_DATABASE_ADDRESS} port=5432 user=hashicups password=hashicups_pwd dbname=products sslmode=disable",
+	"bind_address": ":9090",
+	"metrics_address": ":9103"
+}
+EOF
+        fi
+
+
+    fi
 fi
+
+
 
 ## Payments
 docker run \
@@ -30,20 +212,20 @@ docker run \
   --restart unless-stopped \
   --name hashicups-api-payments hashicorpdemoapp/payments:${VERSION_PAY}
 
-## Product API
-tee /home/admin/conf.json > /dev/null << EOF
-{
-  "db_connection": "host=$${DB} port=5432 user=hashicups password=hashicups_pwd dbname=products sslmode=disable",
-  "bind_address": "$${BIND_PRO}:9090",
-  "metrics_address": "$${BIND_PRO}:9103"
-}
-EOF
+# ## Product API
+# tee /home/${username}/conf.json > /dev/null << EOF
+# {
+#   "db_connection": "host=$${DB} port=5432 user=hashicups password=hashicups_pwd dbname=products sslmode=disable",
+#   "bind_address": "$${BIND_PRO}:9090",
+#   "metrics_address": "$${BIND_PRO}:9103"
+# }
+# EOF
 
 docker run \
   -d \
   $${NETWORK_PRO} \
   --restart unless-stopped \
-  --volume /home/admin/conf.json:/conf.json \
+  --volume /home/${username}/conf.json:/conf.json \
   --name hashicups-api-product hashicorpdemoapp/product-api:${VERSION_PROD}
 
 ## Public API

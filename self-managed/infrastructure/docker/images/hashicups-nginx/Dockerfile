@@ -36,8 +36,13 @@ RUN chown -R 1000:1000 /usr/share/nginx/html
 RUN mkdir -p /var/log/nginx && chown -R 1000:1000 /var/log/nginx
 RUN mkdir -p /var/lib/nginx && chown -R 1000:1000 /var/lib/nginx
 
-COPY start_nginx.sh /home/admin/start_service.sh
+# COPY start_nginx.sh /home/admin/start_service_old.sh
+# RUN  chown -R 1000:1000 /home/admin/start_service_old.sh && chmod +x /home/admin/start_service_old.sh
+COPY hc_nginx.sh /home/admin/start_service.sh
 RUN  chown -R 1000:1000 /home/admin/start_service.sh && chmod +x /home/admin/start_service.sh
+
+COPY hc_nginx.sh /home/admin/hc_service.sh
+RUN  chown -R 1000:1000 /home/admin/hc_service.sh && chmod +x /home/admin/hc_service.sh
 
 # ----------------- #
 # | ENTRYPOINT    | #

@@ -9,7 +9,7 @@ function get_envoy_version() {
 
     CONSUL_VER=$1
 
-    CONSUL_VER=`echo ${CONSUL_VER} | sed 's/\.[0-9]*$/.x/g'`
+    # CONSUL_VER=`echo ${CONSUL_VER} | sed 's/\.[0-9]*$/.x/g'`
 
     ## [warn] [flow] Get compatible Envoy Version relies on a web page content
     ## Logic
@@ -36,23 +36,34 @@ function get_envoy_version() {
     ## 04 Select only the first row
     ## 05 Remove trailing comma
 
-    ENVOY_VER=`curl -s https://raw.githubusercontent.com/hashicorp/consul/main/website/content/docs/connect/proxies/envoy.mdx | \
-    grep --color=never -P "${CONSUL_VER}\sCE" | \
-    head -1 | \
-    grep -Po "[0-9\.]+x," | \
-    head -1 | \
-    sed 's/,//'`
+    # ENVOY_VER=`curl -s https://raw.githubusercontent.com/hashicorp/consul/main/website/content/docs/connect/proxies/envoy.mdx | \
+    # grep --color=never -P "${CONSUL_VER}\sCE" | \
+    # head -1 | \
+    # grep -Po "[0-9\.]+x," | \
+    # head -1 | \
+    # sed 's/,//'`
 
-    echo ${ENVOY_VER}
+    ## After Consul 1.19 the supported Envoy versions are listed in a file directly in the repository.
+    ENVOY_VER=`curl -s https://raw.githubusercontent.com/hashicorp/consul/refs/tags/v${CONSUL_VER}/envoyextensions/xdscommon/ENVOY_VERSIONS | \
+        grep '^[[:digit:]]' | \
+        sort -nr | \
+        head -n 1`
+
+    if [ "${ENVOY_VER}" == '404: Not Found' ] || [ "${ENVOY_VER}" == "" ]; then
+
+        CONSUL_VER=`echo ${CONSUL_VER} | sed 's/\.[0-9]*$/.x/g'`
+
+        ENVOY_VER=`curl -s https://raw.githubusercontent.com/hashicorp/consul/refs/heads/main/website/content/partials/tables/compatibility/envoy/standard-release.mdx | \
+                grep --color=never -P "${CONSUL_VER}" | \
+                grep -Po "[0-9\.]+x," | \
+                head -1 | \
+                sed 's/,//'`
+    fi
+
+    echo "${ENVOY_VER}"
 }
 
 function get_latest_consul_version() {
-
-    ## Checkpoint URL now only shows latest TLS
-	# CHECKPOINT_URL="https://checkpoint-api.hashicorp.com/v1/check"
-    # if [ -z "$1" ] || [ "$1" == "latest" ] ; then
-    #     CONSUL_VER=$(curl -s "${CHECKPOINT_URL}"/consul | jq .current_version | tr -d '"')
-    # fi
 
     CONSUL_VER=`curl -s https://releases.hashicorp.com/consul/ | \
                     grep "</a>" | \
@@ -61,6 +72,24 @@ function get_latest_consul_version() {
                     grep -v "\.\." | \
                     head -1 | \
                     sed 's/^[^>]*>consul_//g' | sed 's/<.*//g'`
+
+	echo "${CONSUL_VER}"
+}
+
+function get_specific_consul_version() {
+
+    _INPUT="$1"
+
+    CONSUL_VER=$(curl -s https://releases.hashicorp.com/consul/ | \
+                    grep --color=never -oP '/\K[0-9]+\.[0-9]+\.[0-9]*(?=/)' | \
+                    grep --color=never -P "^${_INPUT}(\.|$)" | \
+                    head -1 )
+
+    # curl -s https://releases.hashicorp.com/consul/ | grep -oP '/\K[0-9]+\.[0-9]+\.[0-9]*([-+]\w*)*(?=/)'
+
+    if [ "${CONSUL_VER}" == "" ]; then
+        CONSUL_VER=`get_latest_consul_version`
+    fi
 
 	echo "${CONSUL_VER}"
 }
@@ -88,6 +117,14 @@ DOCKER_REPOSITORY="learn-consul-vms"
 DOCKER_BASE_IMAGE="base-image"
 DOCKER_BASE_CONSUL="base-consul"
 
+CONSUL_VERSION=${1:-"latest"}
+
+if [ "${CONSUL_VERSION}" == "latest" ]; then
+    LAST_CONSUL_VERSION=`get_latest_consul_version`
+else
+    LAST_CONSUL_VERSION=`get_specific_consul_version ${CONSUL_VERSION}`
+fi
+
 ### VERSIONS
 ## HashiCorp tools
 # CONSUL_LATEST=`get_latest_consul_version`
@@ -97,7 +134,7 @@ DOCKER_BASE_CONSUL="base-consul"
 ## Consul version, with the latest compatible Envoy version.
 ## [warn] This might only work with GNU version of sed and grep.
 
-LAST_CONSUL_VERSION=`get_latest_consul_version`
+# LAST_CONSUL_VERSION=`get_latest_consul_version`
 LAST_COMPATIBLE_ENVOY_VERSION=`get_envoy_version ${LAST_CONSUL_VERSION}`
 
 if [ -z "${LAST_COMPATIBLE_ENVOY_VERSION}" ]; then

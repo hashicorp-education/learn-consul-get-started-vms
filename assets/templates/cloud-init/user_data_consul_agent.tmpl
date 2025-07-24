@@ -46,13 +46,23 @@ write_files:
       #!/usr/bin/env bash
 
       ##Retrieve latest compatible Envoy version
+      CONSUL_VERSION=`consul version | grep --color=never Consul | grep -oP --color=never "(\d+\.\d+\.\d+)"`
 
-      ENVOY_VERS=`curl -s https://raw.githubusercontent.com/hashicorp/consul/main/website/content/docs/connect/proxies/envoy.mdx | \
-        grep --color=never -P \`consul version | grep --color=never Consul | grep -oP --color=never "(\d\.\d\d)"\` | \
-        head -1 | \
-        grep -Po "[0-9\.]+x," | \
-        head -1 | \
-        sed 's/.x,/-latest/'`
+      ENVOY_VER=`curl -s https://raw.githubusercontent.com/hashicorp/consul/refs/tags/v$${CONSUL_VER}/envoyextensions/xdscommon/ENVOY_VERSIONS | \
+        grep '^[[:digit:]]' | \
+        sort -nr | \
+        head -n 1`
+
+      if [ "$${ENVOY_VER}" == '404: Not Found' ] || [ "$${ENVOY_VER}" == "" ]; then
+
+        CONSUL_VER=`echo $${CONSUL_VER} | sed 's/\.[0-9]*$/.x/g'`
+
+        ENVOY_VER=`curl -s https://raw.githubusercontent.com/hashicorp/consul/refs/heads/main/website/content/partials/tables/compatibility/envoy/standard-release.mdx | \
+                grep --color=never -P "$${CONSUL_VER}" | \
+                grep -Po "[0-9\.]+x," | \
+                head -1 | \
+                sed 's/,//'`
+      fi
 
       ## FALLBACK
       ## In case the page used for Envoy version changes and the above command 

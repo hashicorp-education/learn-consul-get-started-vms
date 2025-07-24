@@ -290,7 +290,7 @@ connect {
 
 # Addresses and ports
 client_addr = "127.0.0.1"
-bind_addr   = "{{ GetInterfaceIP \"eth0\" }}"
+bind_addr   = "{{ GetInterfaceIP \"eth0\" }} {{ GetInterfaceIP \"enX0\" }}"
 
 addresses {
   grpc = "127.0.0.1"

@@ -5,7 +5,7 @@
 resource "aws_instance" "consul_server" {
   depends_on                  = [module.vpc]
   count                       = var.server_number
-  ami                         = data.aws_ami.debian-11.id
+  ami                         = data.aws_ami.debian-12.id
   associate_public_ip_address = true
   instance_type               = "t2.micro"
   key_name                    = aws_key_pair.keypair.id

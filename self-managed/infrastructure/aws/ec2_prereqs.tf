@@ -42,7 +42,7 @@ ${ip} consul-esm-${index}
 
 resource "aws_instance" "bastion" {
   depends_on                  = [module.vpc]
-  ami                         = data.aws_ami.debian-11.id
+  ami                         = data.aws_ami.debian-12.id
   associate_public_ip_address = true
   instance_type               = "t2.micro"
   key_name                    = aws_key_pair.keypair.id

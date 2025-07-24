@@ -11,7 +11,7 @@
 resource "aws_instance" "gateway-api" {
   depends_on    = [module.vpc]
   count         = var.api_gw_number
-  ami           = data.aws_ami.debian-11.id
+  ami           = data.aws_ami.debian-12.id
   instance_type = "t2.micro"
   key_name      = aws_key_pair.keypair.id
   vpc_security_group_ids = [
@@ -63,7 +63,7 @@ resource "aws_instance" "gateway-api" {
 resource "aws_instance" "gateway-mesh" {
   depends_on    = [module.vpc]
   count         = var.mesh_gw_number
-  ami           = data.aws_ami.debian-11.id
+  ami           = data.aws_ami.debian-12.id
   instance_type = "t2.micro"
   key_name      = aws_key_pair.keypair.id
   vpc_security_group_ids = [
@@ -113,7 +113,7 @@ resource "aws_instance" "gateway-mesh" {
 resource "aws_instance" "gateway-terminating" {
   depends_on    = [module.vpc]
   count         = var.term_gw_number
-  ami           = data.aws_ami.debian-11.id
+  ami           = data.aws_ami.debian-12.id
   instance_type = "t2.micro"
   key_name      = aws_key_pair.keypair.id
   vpc_security_group_ids = [
@@ -163,7 +163,7 @@ resource "aws_instance" "gateway-terminating" {
 resource "aws_instance" "consul-esm" {
   depends_on    = [module.vpc]
   count         = var.consul_esm_number
-  ami           = data.aws_ami.debian-11.id
+  ami           = data.aws_ami.debian-12.id
   instance_type = "t2.micro"
   key_name      = aws_key_pair.keypair.id
   vpc_security_group_ids = [

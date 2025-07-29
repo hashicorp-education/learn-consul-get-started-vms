@@ -50,7 +50,7 @@ fi
 # || Begin           |
 # ++-----------------+
 
-header1 "Validate scenario Consul service discovery"
+header1 "Validate scenario Consul service mesh"
 
 ## Give scenario time to settle
 sleep 6 
@@ -63,7 +63,8 @@ source ${SCENARIO_OUTPUT_FOLDER}/env-consul.env
 header2 "Check HashiCups configuration."
 # ==============================================================================
 
-HC_TITLE=`curl -sk https://gateway-api-0:8443 | grep -oPs "(?<=<title>).*(?=</title>)"`
+# HC_TITLE=`curl -sk https://gateway-api-0:8443 | grep -oPs "(?<=<title>).*(?=</title>)"`
+HC_TITLE=`curl -s http://hashicups-nginx-0 | grep -oPs "(?<=<title>).*(?=</title>)"`
 
 OUTP=$?
 
@@ -79,25 +80,25 @@ fi
 
 log "HashiCups Frontend correctly working."
 
-SUBJ_CN=`echo | \
-openssl s_client -showcerts \
--connect gateway-api-0:8443 2>/dev/null | \
-openssl x509 -inform pem -noout -text | \
-grep Subject: | awk '{print $NF}'`
+# SUBJ_CN=`echo | \
+# openssl s_client -showcerts \
+# -connect gateway-api-0:8443 2>/dev/null | \
+# openssl x509 -inform pem -noout -text | \
+# grep Subject: | awk '{print $NF}'`
 
-OUTP=$?
+# OUTP=$?
 
-if [ ! "${OUTP}" -eq "0" ] 
-then
-	log_err "HashiCups not responding."
-	exit 3
-elif [ ! "${SUBJ_CN}" == "hashicups.hashicorp.com" ] 
-then 
-	log_err "API Gateway certificate error."
-	exit 4
-fi
+# if [ ! "${OUTP}" -eq "0" ] 
+# then
+# 	log_err "HashiCups not responding."
+# 	exit 3
+# elif [ ! "${SUBJ_CN}" == "hashicups.hashicorp.com" ] 
+# then 
+# 	log_err "API Gateway certificate error."
+# 	exit 4
+# fi
 
-log "API Gateway presenting correct certificate."
+# log "API Gateway presenting correct certificate."
 
 # HC_API=`curl -s 'http://hashicups-api-0:8081/api' \
 # 	-H 'Accept-Encoding: gzip, deflate, br' \

@@ -55,7 +55,7 @@ data_dir = "${CONSUL_DATA_DIR}"
 
 ## Networking 
 client_addr = "127.0.0.1"
-bind_addr   = "{{ GetInterfaceIP \"eth0\" }}"
+bind_addr   = "{{ GetInterfaceIP \"eth0\" }} {{ GetInterfaceIP \"enX0\" }}"
 
 # Join other Consul agents
 retry_join = [ "${CONSUL_RETRY_JOIN}", "consul.service.${CONSUL_DATACENTER}.${CONSUL_DOMAIN}" ]

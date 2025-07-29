@@ -105,10 +105,11 @@ for node in "${NODES_ARRAY[@]}"; do
     _start_param="--local"
 
     if [ "${node}" == "hashicups-nginx" ]; then
+      log "HashiCups NGINX detected, restarting in Ingress mode"
       _start_param="--ingress"
     fi      
 
-    log "Restart service on ${NODE_NAME}"
+    log "Restart service with param ${_start_param} on ${NODE_NAME}"
 
     remote_exec ${NODE_NAME} "~/start_service.sh start ${_start_param}"
 

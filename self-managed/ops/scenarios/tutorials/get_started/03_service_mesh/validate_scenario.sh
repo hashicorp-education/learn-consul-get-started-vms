@@ -98,7 +98,7 @@ then
 	exit 4
 fi
 
-# log "API Gateway presenting correct certificate."
+log "API Gateway presenting correct certificate."
 
 # HC_API=`curl -s 'http://hashicups-api-0:8081/api' \
 # 	-H 'Accept-Encoding: gzip, deflate, br' \

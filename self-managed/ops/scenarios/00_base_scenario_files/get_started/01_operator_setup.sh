@@ -79,6 +79,8 @@ if [ "${ENABLE_MONITORING}" == "true" ]; then
       
       log_warn "AWS API not working for public IP. Fallback to external service."
       export GRAFANA_URI=$(curl -s ifconfig.me)
+      export LOKI_URI=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
+      export PROMETHEUS_URI=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
 
     fi
 
@@ -86,7 +88,9 @@ if [ "${ENABLE_MONITORING}" == "true" ]; then
     if [ -z "${GRAFANA_URI}" ]; then
 
       log_err "Fallback not working. Grafana dashboard might not work properly."
-      export GRAFANA_URI="grafana"
+      export GRAFANA_URI="127.0.0.1"
+      export LOKI_URI="127.0.0.1"
+      export PROMETHEUS_URI="127.0.0.1"
 
     fi
 

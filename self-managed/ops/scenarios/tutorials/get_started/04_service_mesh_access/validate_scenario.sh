@@ -168,7 +168,7 @@ for node in "${NODES_ARRAY[@]}"; do
 
 	if [ ! "${OUTP}" -eq "0" ] 
 	then
-		log_err "Consum DNS interface not working."
+		log_err "Consul DNS interface not working."
 		exit 10
 	elif [ ! "${SVC_NUM}" -eq "${!NUM}" ] 
 	then 

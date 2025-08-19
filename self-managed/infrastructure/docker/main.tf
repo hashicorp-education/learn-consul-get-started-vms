@@ -74,11 +74,20 @@ resource "docker_container" "bastion_host" {
     destination = "/home/${var.vm_username}"
   }
 
-  provisioner "remote-exec" {
-    inline = [
-      "cd /home/${var.vm_username}/ops && bash ./provision.sh operate ${var.scenario}"
-    ]
+  provisioner "local-exec" {
+    command = "ssh -o StrictHostKeyChecking=accept-new -i ./images/base/certs/id_rsa admin@127.0.0.1 -p 2222 \"cd /home/${var.vm_username}/ops && bash ./provision.sh operate ${var.scenario}\""
   }
+
+
+  # provisioner "remote-exec" {
+  #   # inline = [
+  #   #   "cd /home/${var.vm_username}/ops && bash ./provision.sh operate ${var.scenario}"
+  #   # ]
+  #   # inline = [
+  #   #   "bash /home/${var.vm_username}/ops/provision.sh operate ${var.scenario}"
+  #   # ]
+  #   # script = "/home/${var.vm_username}/ops/provision.sh operate ${var.scenario}"
+  # }
 }
 
 # ----------------- #

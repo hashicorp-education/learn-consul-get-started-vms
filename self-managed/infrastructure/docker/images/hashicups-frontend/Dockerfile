@@ -7,7 +7,8 @@ ARG APP_VERSION
 
 # FROM hashicorpdemoapp/frontend:${APP_VERSION} as application
 # FROM im2nguyenhashi/hashicups-frontend:latest as application
-FROM im2nguyenhashi/frontend-localhost:latest as application
+# FROM im2nguyenhashi/frontend-localhost:latest as application
+FROM public.ecr.aws/y0y8c5c8/hashicorp-demoapp/frontend:latest as application
 
 FROM ${BASE_IMAGE} 
 

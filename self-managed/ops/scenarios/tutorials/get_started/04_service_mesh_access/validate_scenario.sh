@@ -91,7 +91,7 @@ if [ ! "${OUTP}" -eq "0" ]
 then
 	log_err "HashiCups not responding."
 	exit 3
-elif [ ! "${SUBJ_CN}" == "hashicups.hashicorp.com" ] 
+elif [[ ! "${SUBJ_CN}" =~ "hashicups.hashicorp.com" ]] 
 then 
 	log_err "API Gateway certificate error."
 	exit 4

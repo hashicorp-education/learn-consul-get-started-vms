@@ -266,7 +266,7 @@ for node in "${NODES_ARRAY[@]}"; do
   for i in `seq ${!NUM}`; do
 
     NODE_NAME="${node}-$((i-1))"
-    
+
     remote_copy ${NODE_NAME} ${_tmp_file} ${_tmp_file}
     remote_exec -s ${NODE_NAME} "rm -f ${_tmp_file}"
 

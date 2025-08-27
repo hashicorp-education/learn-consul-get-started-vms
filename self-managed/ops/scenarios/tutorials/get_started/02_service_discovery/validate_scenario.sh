@@ -164,6 +164,8 @@ for node in "${NODES_ARRAY[@]}"; do
 		exit 9
 	fi
 
+	sleep 5
+
 	SVC_NUM=`dig +short \
 		@consul-server-0 \
 		-p ${CONSUL_DNS_PORT} \

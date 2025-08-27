@@ -170,6 +170,11 @@ for node in "${NODES_ARRAY[@]}"; do
 		${node}.service.${CONSUL_DATACENTER}.${CONSUL_DOMAIN} | \
 		wc -l`
 
+	dig +short \
+		@consul-server-0 \
+		-p ${CONSUL_DNS_PORT} \
+		${node}.service.${CONSUL_DATACENTER}.${CONSUL_DOMAIN}
+
 	OUTP=$?
 
 	if [ ! "${OUTP}" -eq "0" ] 

@@ -142,8 +142,6 @@ log "All Consul servers correctly working."
 header2 "Check Consul client configuration."
 # ==============================================================================
 
-set -x
-
 NODES_ARRAY=( "hashicups-db" "hashicups-api" "hashicups-frontend" "hashicups-nginx" )
 
 for node in "${NODES_ARRAY[@]}"; do
@@ -171,11 +169,6 @@ for node in "${NODES_ARRAY[@]}"; do
 		-p ${CONSUL_DNS_PORT} \
 		${node}.service.${CONSUL_DATACENTER}.${CONSUL_DOMAIN} | \
 		wc -l`
-
-	dig +short \
-		@consul-server-0 \
-		-p ${CONSUL_DNS_PORT} \
-		${node}.service.${CONSUL_DATACENTER}.${CONSUL_DOMAIN}
 
 	OUTP=$?
 
@@ -206,8 +199,6 @@ for node in "${NODES_ARRAY[@]}"; do
 	fi
 
 done
-
-set +x 
 
 log_info "Test for scenario passed. Great job."
 exit 0

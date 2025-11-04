@@ -113,6 +113,16 @@ resource "docker_container" "consul_server" {
     external = format("%d", count.index + 8443)
   }
 
+  ports {
+    internal = "8500"
+    external = format("%d", count.index + 8500)
+  }
+
+  volumes {
+    container_path = "/home/${var.vm_username}/bin"
+    host_path      = abspath("${path.module}/../../../bin")
+  }
+
 }
 
 # ----------------- #

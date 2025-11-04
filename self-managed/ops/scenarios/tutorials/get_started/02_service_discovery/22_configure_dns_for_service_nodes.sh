@@ -10,7 +10,7 @@ export STEP_ASSETS="${SCENARIO_OUTPUT_FOLDER}conf/"
 # || Begin           |
 # ++-----------------+
 
-header1 "Configure ing DNS for HashiCups Client nodes"
+header1 "Configure DNS for HashiCups Client nodes"
 
 # log "Change DNS for API Gateways"
 

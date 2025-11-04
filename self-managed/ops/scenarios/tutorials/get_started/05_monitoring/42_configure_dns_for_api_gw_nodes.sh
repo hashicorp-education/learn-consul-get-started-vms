@@ -10,7 +10,7 @@ export STEP_ASSETS="${SCENARIO_OUTPUT_FOLDER}conf/"
 # || Begin           |
 # ++-----------------+
 
-header1 "Configure ing DNS for API gateway nodes"
+header1 "Configure DNS for API gateway nodes"
 
 for i in `seq ${api_gw_NUMBER}`; do
 

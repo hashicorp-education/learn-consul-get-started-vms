@@ -69,7 +69,7 @@ OUTP=$?
 
 if [ ! "${OUTP}" -eq "0" ] 
 then
-	log_err "HashiCups not responding."
+	log_err "HashiCups not responding on direct CURL."
 	exit 1
 elif [ ! "${HC_TITLE}" == "HashiCups - Demo App" ] 
 then 
@@ -89,7 +89,7 @@ OUTP=$?
 
 if [ ! "${OUTP}" -eq "0" ] 
 then
-	log_err "HashiCups not responding."
+	log_err "API Gateway not presenting correct certificate."
 	exit 3
 elif [[ ! "${SUBJ_CN}" =~ "hashicups.hashicorp.com" ]] 
 then 

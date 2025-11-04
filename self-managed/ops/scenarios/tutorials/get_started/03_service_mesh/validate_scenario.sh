@@ -74,6 +74,8 @@ then
 
 	nslookup gateway-api-0
 
+	curl -k https://gateway-api-0:8443
+
 	exit 1
 elif [ ! "${HC_TITLE}" == "HashiCups - Demo App" ] 
 then 

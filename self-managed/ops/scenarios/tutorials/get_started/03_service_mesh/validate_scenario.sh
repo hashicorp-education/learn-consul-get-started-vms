@@ -72,9 +72,11 @@ if [ ! "${OUTP}" -eq "0" ]
 then
 	log_err "HashiCups not responding on direct CURL."
 
+	## Debug
 	nslookup gateway-api-0
-
 	curl -k https://gateway-api-0:8443
+	
+	ssh -i ~/certs/id_rsa gateway-api-0 "/bin/bash -c 'netstat -natp; ps aux'"
 
 	exit 1
 elif [ ! "${HC_TITLE}" == "HashiCups - Demo App" ] 

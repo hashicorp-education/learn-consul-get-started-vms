@@ -50,7 +50,7 @@ fi
 # || Begin           |
 # ++-----------------+
 
-header1 "Validate scenario Consul service discovery"
+header1 "Validate scenario Consul service mesh monitoring"
 
 ## Give scenario time to settle
 sleep 6 

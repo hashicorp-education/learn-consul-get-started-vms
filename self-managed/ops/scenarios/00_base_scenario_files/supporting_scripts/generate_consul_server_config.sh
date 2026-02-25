@@ -413,6 +413,7 @@ tee ./agent-server-telemetry.hcl > /dev/null << EOF
 telemetry {
   prometheus_retention_time = "60s"
   disable_hostname = true
+  enable_host_metrics = true
 }
 EOF
 

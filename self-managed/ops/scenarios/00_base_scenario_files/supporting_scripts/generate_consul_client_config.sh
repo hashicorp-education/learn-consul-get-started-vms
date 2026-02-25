@@ -203,6 +203,12 @@ acl {
   default_policy = "deny"
   enable_token_persistence = true
 }
+
+telemetry {
+  prometheus_retention_time = "60s"
+  disable_hostname = true
+  enable_host_metrics = true
+}
 EOF
 
 _log " - Validate configuration for ${NODE_NAME}"

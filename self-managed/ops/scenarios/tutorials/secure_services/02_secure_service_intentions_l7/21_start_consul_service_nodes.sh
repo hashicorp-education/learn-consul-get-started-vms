@@ -129,7 +129,10 @@ EOF
 
   log_debug "Generate ACL tokens"
 
-  consul acl token create -description="Node ${NODE_NAME} token"  --format json -node-identity="${NODE_NAME}:${CONSUL_DATACENTER}" > ${STEP_ASSETS}secrets/acl-token-node-${NODE_NAME}.json
+  # consul reload command requires `agent: write` ACL permissions. Creating a policy to allow that command.
+  consul acl policy create -name "${node}_agent_rules" -description "Policy to allow ${node} ro reload configuration" -rules 'agent_prefix "'${node}'" { policy = "write" }'
+
+  consul acl token create -description="Node ${NODE_NAME} token"  --format json -node-identity="${NODE_NAME}:${CONSUL_DATACENTER}" -policy-name="${node}_agent_rules" > ${STEP_ASSETS}secrets/acl-token-node-${NODE_NAME}.json
 
   AGENT_TOKEN=`cat ${STEP_ASSETS}secrets/acl-token-node-${NODE_NAME}.json | jq -r ".SecretID"`
 

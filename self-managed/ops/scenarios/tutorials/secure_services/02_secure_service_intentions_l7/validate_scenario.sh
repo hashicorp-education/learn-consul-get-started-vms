@@ -50,7 +50,7 @@ fi
 # || Begin           |
 # ++-----------------+
 
-header1 "Validate scenario Consul service mesh"
+header1 "Validate scenario Consul service mesh monitoring"
 
 ## Give scenario time to settle
 sleep 6 
@@ -64,22 +64,12 @@ header2 "Check HashiCups configuration."
 # ==============================================================================
 
 HC_TITLE=`curl -sk https://gateway-api-0:8443 | grep -oPs "(?<=<title>).*(?=</title>)"`
-# HC_TITLE=`curl -s http://hashicups-nginx-0 | grep -oPs "(?<=<title>).*(?=</title>)"`
 
 OUTP=$?
 
 if [ ! "${OUTP}" -eq "0" ] 
 then
 	log_err "HashiCups not responding on direct CURL."
-
-	## Debug
-	nslookup gateway-api-0
-	curl -k https://gateway-api-0:8443
-	
-	# ssh -i ~/certs/id_rsa gateway-api-0 "/bin/bash -c 'cat '"
-
-	ssh -i ~/certs/id_rsa gateway-api-0 "/bin/bash -c 'sudo netstat -natp; sudo ps aux'"
-
 	exit 1
 elif [ ! "${HC_TITLE}" == "HashiCups - Demo App" ] 
 then 
@@ -108,30 +98,6 @@ then
 fi
 
 log "API Gateway presenting correct certificate."
-
-# HC_API=`curl -s 'http://hashicups-api-0:8081/api' \
-# 	-H 'Accept-Encoding: gzip, deflate, br' \
-# 	-H 'Content-Type: application/json' \
-# 	-H 'Accept: application/json' \
-# 	-H 'Connection: keep-alive' \
-# 	-H 'DNT: 1' \
-# 	-H 'Origin: http://localhost:8081' \
-# 	--data-binary '{"query":"mutation{ pay(details:{ name: \"nic\", type: \"mastercard\", number: \"1234123-0123123\", expiry:\"10/02\",    cv2: 1231, amount: 12.23 }){id, card_plaintext, card_ciphertext, message } }"}' --compressed | \
-# 	jq -r .data.pay.id`
-
-# OUTP=$?
-
-# if [ ! "${OUTP}" -eq "0" ] 
-# then
-# 	log_err "HashiCups not responding."
-# 	exit 3
-# elif [ "${HC_API}test" == "test" ] 
-# then 
-# 	log_err "HashiCups backend error."
-# 	exit 4
-# fi
-
-# log "HashiCups Backend correctly working."
 
 # ==============================================================================
 header2 "Check Consul server configuration."
@@ -202,7 +168,7 @@ for node in "${NODES_ARRAY[@]}"; do
 
 	if [ ! "${OUTP}" -eq "0" ] 
 	then
-		log_err "Consum DNS interface not working."
+		log_err "Consul DNS interface not working."
 		exit 10
 	elif [ ! "${SVC_NUM}" -eq "${!NUM}" ] 
 	then 
@@ -225,8 +191,37 @@ for node in "${NODES_ARRAY[@]}"; do
 		log_err "Sidecar proxy for ${node} are not starting correctly."
 		exit 13
 	fi
+done
+
+# ==============================================================================
+header2 "Check grafana-agent configuration."
+# ==============================================================================
+
+NODES_ARRAY=( "consul-server-0" "hashicups-db-0" "hashicups-api-0" "hashicups-frontend-0" "hashicups-nginx-0")
+
+for node in "${NODES_ARRAY[@]}"; do
+
+	AG_PID=`ssh -i ~/certs/id_rsa ${node} \
+		"/bin/bash -c \
+		'ps aux | grep grafana-agent | grep -v grep'"`
+
+	OUTP=$?
+
+	if [ ! "${OUTP}" -eq "0" ] 
+	then
+		log_err "Error connetting SSH to ${node}."
+		exit 14
+	elif [ ! "${SIDECAR}" -eq "1" ] 
+	then 
+		log_err "Grafana agent for${node} are not starting correctly."
+		exit 15
+	fi
+
+  log "Grafana agent for ${node} installed correctly."
 
 done
+
+
 
 log_info "Test for scenario passed. Great job."
 exit 0

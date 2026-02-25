@@ -41,6 +41,21 @@ resource "docker_container" "bastion_host" {
     external = "2222"
   }
 
+  ports {
+    internal = "8200"
+    external = "8200"
+  }
+
+  ports {
+    internal = "8201"
+    external = "8201"
+  }
+
+  ports {
+    internal = "8500"
+    external = "8800"
+  }
+
   labels {
     label = "tag"
     value = "learn-consul-vms"

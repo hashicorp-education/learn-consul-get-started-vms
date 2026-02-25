@@ -381,6 +381,8 @@ md_log 'You can now apply the configuration to Consul datacenter.'
 _RUN_CMD 'consul config write ${OUTPUT_FOLDER}config-gateway-api-fs.hcl; \
 consul config write ${OUTPUT_FOLDER}config-gateway-api-fs-certificate.hcl'
 
+### REMOVE WHEN TESTED
+
 ## Removing the configuration to avoid conflicts
 consul config delete -kind api-gateway -name api-gw-listener
 consul config delete -kind file-system-certificate -name api-gw-certificate
@@ -450,6 +452,8 @@ md_log 'You can now apply the configuration to Consul datacenter.'
 
 _RUN_CMD 'consul config write ${OUTPUT_FOLDER}config-gateway-api-inline.hcl; \
 consul config write ${OUTPUT_FOLDER}config-gateway-api-inline-certificate.hcl'
+
+### REMOVE WHEN TESTED
 
 ##  H2 -------------------------------------------------------------------------
 md_h2 "Start API gateway"

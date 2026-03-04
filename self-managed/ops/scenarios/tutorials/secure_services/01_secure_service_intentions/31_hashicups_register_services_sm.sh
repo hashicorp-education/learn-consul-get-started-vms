@@ -55,7 +55,7 @@ for node in "${NODES_ARRAY[@]}"; do
     
     log "Copy Configuration for ${NODE_NAME}"
 
-    remote_copy ${NODE_NAME} "${STEP_ASSETS}${NODE_NAME}/svc/service_mesh/svc-${node}.hcl" "${CONSUL_CONFIG_DIR}"
+    remote_copy ${NODE_NAME} "${STEP_ASSETS}${NODE_NAME}/svc/service_mesh/svc-${node}.hcl" "${CONSUL_CONFIG_DIR}svc.hcl"
 
     sleep 2
 

@@ -29,7 +29,7 @@ mkdir -p "${OUTPUT_FOLDER}global"
 
 log "Generate files"
 
-## [cmd] [script] generate_global_config_hashicups.sh
+## [cmd] [script] generate_global_config_intentions.sh
 log -l WARN -t '[SCRIPT]' "Generate global Consul config for Service Mesh"
 execute_supporting_script "generate_global_config_intentions.sh"
 

@@ -18,18 +18,25 @@
 #     grep \`consul version | grep Consul | grep -oP "(\d\.\d\d)"\` | \
 #     sed 's/.*\ :\ //g' | sed 's/,.*//'`
 
-## NEW NEW VERSION
-ENVOY_VERS=`curl -s https://raw.githubusercontent.com/hashicorp/consul/main/website/content/docs/connect/proxies/envoy.mdx | \
-    grep --color=never -P \`consul version | grep --color=never Consul | grep -oP --color=never "(\d\.\d\d)"\` | \
-    head -1 | \
-    grep -Po "[0-9\.]+x," | \
-    head -1 | \
-    sed 's/.x,/-latest/'`
+## OLD NEW NEW VERSION
+# ENVOY_VERS=`curl -s https://raw.githubusercontent.com/hashicorp/consul/main/website/content/docs/connect/proxies/envoy.mdx | \
+#     grep --color=never -P \`consul version | grep --color=never Consul | grep -oP --color=never "(\d\.\d\d)"\` | \
+#     head -1 | \
+#     grep -Po "[0-9\.]+x," | \
+#     head -1 | \
+#     sed 's/.x,/-latest/'`
+
+## NEW NEW NEW VERSION
+_CONSUL_VERSION=`consul version | grep --color=never Consul | awk '{print $2}'`
+
+ENVOY_VERS=`curl -s https://raw.githubusercontent.com/hashicorp/consul/refs/tags/${_CONSUL_VERSION}/envoyextensions/xdscommon/ENVOY_VERSIONS | \
+    grep --color=never -v "#" | \
+    head -1` 
 
 ## FALLBACK
 ## In case the page used for Envoy version changes and the above command 
 ## does not work the following command will use the HashiCorp repository
-## to retrieve the latest Envoy bversion available there.
+## to retrieve the latest Envoy version available there.
 ## [WARN] The version retrieved might not work when using Consul version 
 ## different from the latest.
 if [ -z "$${ENVOY_VERS}" ]; then
